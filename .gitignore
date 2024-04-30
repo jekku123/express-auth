@@ -16,6 +16,8 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 
 # Runtime data
 
+mongo_data
+
 pids
 _.pid
 _.seed
