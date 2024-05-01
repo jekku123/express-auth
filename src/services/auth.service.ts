@@ -50,6 +50,7 @@ export class AuthService implements IAuthService {
     }
     const account = await Account.findOne({ userId: user.id });
 
+    // TODO: Maybe link account to user if not linked here instead in emailVerification
     if (!account) {
       throw new AppError('Account not linked', STATUS_CODES.NOT_FOUND, {
         email,
@@ -62,11 +63,9 @@ export class AuthService implements IAuthService {
       });
     }
 
-    const { accessToken, refreshToken } = this.tokenService.generateTokens();
+    const { token, expires } = this.tokenService.generateSessionToken();
 
-    account.refreshToken = refreshToken.token;
-    account.accessToken = accessToken.token;
-    account.expiresAt = new Date(refreshToken.expires);
+    account.expiresAt = new Date(expires);
     account.sessionState = 'active';
 
     const updatedAccount = await account.save();
@@ -77,8 +76,8 @@ export class AuthService implements IAuthService {
 
     const session = Session.create({
       userId: user.id,
-      sessionToken: accessToken.token,
-      expiresAt: accessToken.expires,
+      sessionToken: token,
+      expiresAt: expires,
     });
 
     if (!session) {
@@ -87,30 +86,37 @@ export class AuthService implements IAuthService {
 
     this.logger.info(
       `Session created for user with email ${email}\n
-        sessionToken: ${accessToken.token}\n
-        expiresAt: ${accessToken.expires}`,
+        sessionToken: ${token}\n
+        expiresAt: ${expires}`,
       AuthService.name
     );
     this.logger.info(`User with email ${email} logged in`, AuthService.name);
 
-    return { accessToken, refreshToken };
+    return {
+      user: {
+        id: user.id,
+        email: user.email,
+      },
+      sessionToken: token,
+    };
   }
 
-  async logout(userId: string) {
-    const session = await Session.findOne({ userId });
+  async logout(sessionToken: string) {
+    const session = await Session.findOne({ sessionToken });
 
     if (!session) {
       throw new AppError('Logout failed, session not found', STATUS_CODES.INTERNAL_SERVER_ERROR);
     }
 
-    const account = await Account.findOne({ userId });
+    const account = await Account.findOne({ userId: session.userId });
 
     if (!account) {
       throw new AppError('Logout failed, account not found', STATUS_CODES.INTERNAL_SERVER_ERROR);
     }
 
-    account.refreshToken = undefined;
-    account.accessToken = undefined;
+    // delete account.expiresAt;
+    // delete account.sessionState;
+
     account.expiresAt = undefined;
     account.sessionState = 'inactive';
 
@@ -122,7 +128,7 @@ export class AuthService implements IAuthService {
 
     this.logger.info(`Account with id ${account.userId} logged out`, AuthService.name);
 
-    const deletedSession = await Session.deleteOne({ _id: session.id });
+    const deletedSession = await Session.deleteOne({ sessionToken });
 
     if (!deletedSession) {
       throw new AppError('Failed to delete session', STATUS_CODES.INTERNAL_SERVER_ERROR);
@@ -168,7 +174,11 @@ export class AuthService implements IAuthService {
       throw new AppError('Verification token not found', STATUS_CODES.NOT_FOUND);
     }
 
-    await foundToken.verifyToken(token);
+    const result = foundToken.verifyToken(token);
+
+    if (!result.success) {
+      throw new AppError(result.message, STATUS_CODES.UNAUTHORIZED);
+    }
 
     const user = await User.findById(userId);
 
@@ -176,13 +186,13 @@ export class AuthService implements IAuthService {
       throw new AppError(ERROR_MESSAGES.USER_NOT_FOUND, STATUS_CODES.NOT_FOUND, { userId });
     }
 
-    user.emailVerified = true;
     const linked = await user.linkAccount(userId, user.email);
 
     if (!linked) {
-      throw new AppError(ERROR_MESSAGES.INTERNAL_SERVER_ERROR, STATUS_CODES.INTERNAL_SERVER_ERROR);
+      throw new AppError('Failed linking account', STATUS_CODES.INTERNAL_SERVER_ERROR);
     }
 
+    user.emailVerified = true;
     await user.save();
 
     const deletedToken = await VerificationToken.deleteOne({ userId });

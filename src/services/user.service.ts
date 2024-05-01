@@ -7,6 +7,7 @@ import { STATUS_CODES } from '../config/errors/statusCodes';
 import AppError from '../config/errors/AppError';
 import User, { UserType } from '../models/user';
 
+import VerificationToken from '../models/verificationToken';
 import { ILogger } from '../types/ILogger';
 import { IUserService } from '../types/IUserService';
 
@@ -30,9 +31,22 @@ export class UserService implements IUserService {
     }
 
     const userObj = new User({ email, password });
+    const userId = userObj.id;
 
-    await userObj.createVerificationToken(userObj.id);
+    const isToken = await VerificationToken.findOne({
+      userId,
+    });
 
+    if (isToken) {
+      throw new AppError('Verification token already exists', STATUS_CODES.BAD_REQUEST);
+    }
+
+    const verificationToken = new VerificationToken({ userId });
+    const savedToken = await verificationToken.save();
+
+    if (!savedToken) {
+      throw new AppError('Verification token not created', STATUS_CODES.INTERNAL_SERVER_ERROR);
+    }
     const newUser = await userObj.save();
 
     if (!newUser) {

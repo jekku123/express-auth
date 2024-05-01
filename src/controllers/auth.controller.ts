@@ -7,6 +7,7 @@ import Account from '../models/account';
 import Session from '../models/session';
 import User from '../models/user';
 import VerificationToken from '../models/verificationToken';
+import { TokenService } from '../services/token.service';
 import { IAuthService } from '../types/IAuthService';
 
 @injectable()
@@ -26,16 +27,16 @@ export class AuthController {
     const { email, password } = req.body;
 
     try {
-      const { accessToken, refreshToken } = await this.authService.login(email, password);
+      const { sessionToken, user } = await this.authService.login(email, password);
 
-      res.cookie('refreshToken', refreshToken.token, {
+      res.cookie('sessionToken', sessionToken, {
         httpOnly: true,
         secure: true,
         sameSite: 'none',
-        maxAge: 7 * 24 * 60 * 60 * 1000,
+        maxAge: TokenService.SESSION_TOKEN_EXPIRES,
       });
 
-      res.status(STATUS_CODES.OK).send({ accessToken: accessToken.token });
+      res.status(STATUS_CODES.OK).send(user);
     } catch (error) {
       next(error);
     }
@@ -70,19 +71,18 @@ export class AuthController {
    */
   async onLogout(req: Request, res: Response, next: NextFunction) {
     const cookies = req.cookies;
-    const userId = req.user.id;
 
-    if (!cookies?.refreshToken) {
+    if (!cookies?.sessionToken) {
       return res.sendStatus(STATUS_CODES.NO_CONTENT);
     }
 
-    this.authService.logout(userId);
+    this.authService.logout(cookies.sessionToken);
 
-    res.clearCookie('refreshToken', {
+    res.clearCookie('sessionToken', {
       httpOnly: true,
       secure: true,
       sameSite: 'none',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+      maxAge: TokenService.SESSION_TOKEN_EXPIRES,
     });
 
     res.status(STATUS_CODES.OK).send({ message: 'Logged out' });

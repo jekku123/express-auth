@@ -2,7 +2,6 @@ import express from 'express';
 import { Container } from 'inversify';
 import { INTERFACE_TYPE } from '../config/dependencies';
 import { AuthController } from '../controllers/auth.controller';
-import { validateToken } from '../middlewares/validateToken';
 import { AuthService } from '../services/auth.service';
 import Logger from '../services/logger.service';
 import { TokenService } from '../services/token.service';
@@ -28,6 +27,6 @@ router.post('/verify-email', controller.onVerifyEmail.bind(controller));
 
 router.get('/test', controller.onTest.bind(controller));
 
-router.get('/logout', validateToken, controller.onLogout.bind(controller));
+router.get('/logout', controller.onLogout.bind(controller));
 
 export default router;

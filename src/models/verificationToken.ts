@@ -1,9 +1,11 @@
 import { randomUUID } from 'crypto';
 import mongoose, { Model, Schema } from 'mongoose';
-import AppError from '../config/errors/AppError';
 
 interface VerificationTokenMethods {
-  verifyToken: (token: string) => Promise<boolean>;
+  verifyToken: (token: string) => {
+    success: boolean;
+    message: string;
+  };
 }
 
 export interface VerificationTokenType {
@@ -35,14 +37,23 @@ const verificationTokenSchema = new Schema<
   },
 });
 
-verificationTokenSchema.method('verifyToken', async function (token: string) {
+verificationTokenSchema.method('verifyToken', function (token: string) {
   if (this.expiresAt < new Date(Date.now())) {
-    throw new AppError('Verification token expired', 401);
+    return {
+      success: false,
+      message: 'Verification token expired',
+    };
   }
   if (this.verificationToken !== token) {
-    throw new AppError('Invalid verification token', 401);
+    return {
+      success: false,
+      message: 'Invalid verification token',
+    };
   }
-  return true;
+  return {
+    success: true,
+    message: 'Verification token verified',
+  };
 });
 
 const VerificationToken = mongoose.model('VerificationToken', verificationTokenSchema);

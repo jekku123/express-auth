@@ -34,9 +34,10 @@ services:
     networks:
       - express-mongo
     volumes:
-      - ./mongo_data:/data/db
+      - ./mongodb:/data/db
 
 networks:
   express-mongo:
+
 volumes:
-  mongo_data:
+  mongodb:

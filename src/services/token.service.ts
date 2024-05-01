@@ -1,41 +1,22 @@
-import { randomUUID } from 'crypto';
+import crypto from 'crypto';
 import { injectable } from 'inversify';
-import { ITokenService, Tokens } from '../types/ITokenService';
+import { ITokenService } from '../types/ITokenService';
 
 @injectable()
 export class TokenService implements ITokenService {
-  generateToken(expires: string) {
-    const token = randomUUID();
-    return {
-      token,
-      expires,
-    };
-  }
+  // 15 minutes
+  public static SESSION_TOKEN_EXPIRES = 15 * 60 * 1000;
 
-  generateAccessToken() {
-    const token = randomUUID();
-    // expires in 15 minutes
-    const expires = new Date(Date.now() + 15 * 60 * 1000).toISOString();
-    return {
-      token,
-      expires,
-    };
-  }
+  // 7 days
+  private refreshTokenExpires = 7 * 24 * 60 * 60 * 1000;
 
-  generateRefreshToken() {
-    const token = randomUUID();
-    // expires in 7 days
-    const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-    return {
-      token,
-      expires,
-    };
-  }
+  generateSessionToken() {
+    const rand64 = crypto.randomBytes(64).toString('base64');
+    const expires = new Date(Date.now() + TokenService.SESSION_TOKEN_EXPIRES).toISOString();
 
-  generateTokens(): Tokens {
     return {
-      accessToken: this.generateAccessToken(),
-      refreshToken: this.generateRefreshToken(),
+      token: rand64,
+      expires,
     };
   }
 }

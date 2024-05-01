@@ -1,16 +1,9 @@
-export type Token = {
-  token: string;
+export type Token = string;
+export type TokenPayload = {
+  token: Token;
   expires: string;
 };
 
-export type Tokens = {
-  accessToken: Token;
-  refreshToken: Token;
-};
-
 export interface ITokenService {
-  generateToken(expires: string): Token;
-  generateAccessToken(): Token;
-  generateRefreshToken(): Token;
-  generateTokens(): Tokens;
+  generateSessionToken(): TokenPayload;
 }

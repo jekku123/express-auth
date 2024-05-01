@@ -2,13 +2,11 @@ import mongoose, { Model, Schema } from 'mongoose';
 import AppError from '../config/errors/AppError';
 import { STATUS_CODES } from '../config/errors/statusCodes';
 import Account, { AccountType } from './account';
-import VerificationToken from './verificationToken';
 
 interface UserMethods {
   verifyPassword: (password: string) => Promise<boolean>;
   setPassword: (password: string) => Promise<UserType>;
   linkAccount: (userId: string, email: string) => Promise<AccountType>;
-  createVerificationToken: (userId: string) => Promise<string>;
 }
 
 export interface UserType {
@@ -73,24 +71,6 @@ userSchema.method('linkAccount', async function (userId: string, email: string) 
   }
 
   return savedAccount;
-});
-
-userSchema.method('createVerificationToken', async function (userId: string) {
-  const isToken = await VerificationToken.findOne({
-    userId,
-  });
-
-  if (isToken) {
-    throw new AppError('Verification token already exists', STATUS_CODES.BAD_REQUEST);
-  }
-  const verificationToken = new VerificationToken({ userId });
-  const savedToken = await verificationToken.save();
-
-  if (!savedToken) {
-    throw new AppError('Verification token not created', STATUS_CODES.INTERNAL_SERVER_ERROR);
-  }
-
-  return savedToken.verificationToken;
 });
 
 const User = mongoose.model('User', userSchema);
