@@ -65,8 +65,6 @@ export class UserService implements IUserService {
       throw new AppError(ERROR_MESSAGES.USER_NOT_FOUND, STATUS_CODES.NOT_FOUND, { id });
     }
 
-    this.logger.info(`User with id ${id} fetched`, UserService.name);
-
     return user;
   }
 

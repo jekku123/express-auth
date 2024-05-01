@@ -6,7 +6,6 @@ const controllers = {
 const services = {
   AuthService: Symbol.for('AuthService'),
   UserService: Symbol.for('UserService'),
-  TokenService: Symbol.for('TokenService'),
   Logger: Symbol.for('Logger'),
 };
 

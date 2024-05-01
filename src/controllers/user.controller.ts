@@ -22,6 +22,7 @@ export class UserController {
     }
   }
 
+  // FOR TESTING PURPOSES
   async onGetUserProfile(req: Request, res: Response, next: NextFunction) {
     const id = req.user.id;
     try {

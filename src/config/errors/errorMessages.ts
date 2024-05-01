@@ -17,4 +17,6 @@ export enum ERROR_MESSAGES {
   CONFLICT = 'Conflict',
   USER_NOT_FOUND = 'User not found',
   MISSING_BEARER_TOKEN = 'Missing Bearer token',
+  MISSING_SESSION_ID = 'Missing session ID',
+  INVALID_SESSION_ID = 'Invalid session ID',
 }

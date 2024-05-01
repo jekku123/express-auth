@@ -5,7 +5,6 @@ interface AccountMethods {}
 export interface AccountType {
   _id: string;
   refreshToken?: string;
-  accessToken?: string;
   expiresAt?: Date;
   sessionState?: string;
   userId: Schema.Types.ObjectId;
@@ -15,9 +14,6 @@ type AccountModel = Model<AccountType, {}, AccountMethods>;
 
 const accountSchema = new Schema<AccountType, AccountModel, AccountMethods>({
   refreshToken: {
-    type: String,
-  },
-  accessToken: {
     type: String,
   },
   expiresAt: {

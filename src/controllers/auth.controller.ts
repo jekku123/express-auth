@@ -2,12 +2,12 @@ import { NextFunction, Request, Response } from 'express';
 import { inject, injectable } from 'inversify';
 import { INTERFACE_TYPE } from '../config/dependencies';
 
+import { cookieSettings } from '../config/cookieSettings';
 import { STATUS_CODES } from '../config/errors/statusCodes';
 import Account from '../models/account';
 import Session from '../models/session';
 import User from '../models/user';
 import VerificationToken from '../models/verificationToken';
-import { TokenService } from '../services/token.service';
 import { IAuthService } from '../types/IAuthService';
 
 @injectable()
@@ -29,12 +29,7 @@ export class AuthController {
     try {
       const { sessionId, user } = await this.authService.login(email, password);
 
-      res.cookie('sessionId', sessionId, {
-        httpOnly: true,
-        secure: true,
-        sameSite: 'none',
-        maxAge: TokenService.SESSION_TOKEN_EXPIRES,
-      });
+      res.cookie('sessionId', sessionId, cookieSettings.httpOnly);
 
       res.status(STATUS_CODES.OK).send(user);
     } catch (error) {
@@ -78,12 +73,7 @@ export class AuthController {
 
     this.authService.logout(cookies.sessionId);
 
-    res.clearCookie('sessionId', {
-      httpOnly: true,
-      secure: true,
-      sameSite: 'none',
-      maxAge: TokenService.SESSION_TOKEN_EXPIRES,
-    });
+    res.clearCookie('sessionId', cookieSettings.httpOnly);
 
     res.status(STATUS_CODES.OK).send({ message: 'Logged out' });
   }
@@ -97,7 +87,7 @@ export class AuthController {
 
     try {
       await this.authService.verifyEmail(userId as string, token as string);
-      res.status(STATUS_CODES.OK).send({ message: 'Email verified' });
+      res.status(STATUS_CODES.OK).send('Email verified');
     } catch (error) {
       next(error);
     }

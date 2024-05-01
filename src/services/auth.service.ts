@@ -11,18 +11,12 @@ import Session from '../models/session';
 import User from '../models/user';
 import VerificationToken from '../models/verificationToken';
 import { ILogger } from '../types/ILogger';
-import { ITokenService } from '../types/ITokenService';
 
 @injectable()
 export class AuthService implements IAuthService {
-  private tokenService: ITokenService;
   private logger: ILogger;
 
-  constructor(
-    @inject(INTERFACE_TYPE.TokenService) tokenService: ITokenService,
-    @inject(INTERFACE_TYPE.Logger) logger: ILogger
-  ) {
-    this.tokenService = tokenService;
+  constructor(@inject(INTERFACE_TYPE.Logger) logger: ILogger) {
     this.logger = logger;
   }
 
@@ -63,9 +57,11 @@ export class AuthService implements IAuthService {
       });
     }
 
-    const { token, expires } = this.tokenService.generatesessionId();
+    const session = new Session({
+      userId: user.id,
+    });
 
-    account.expiresAt = new Date(expires);
+    account.expiresAt = session.expiresAt;
     account.sessionState = 'active';
 
     const updatedAccount = await account.save();
@@ -74,30 +70,18 @@ export class AuthService implements IAuthService {
       throw new AppError('Failed to update account', STATUS_CODES.INTERNAL_SERVER_ERROR);
     }
 
-    const session = Session.create({
-      userId: user.id,
-      sessionId: token,
-      expiresAt: expires,
-    });
+    const savedSession = await session.save();
 
-    if (!session) {
+    if (!savedSession) {
       throw new AppError('Failed to create session', STATUS_CODES.INTERNAL_SERVER_ERROR);
     }
-
-    this.logger.info(
-      `Session created for user with email ${email}\n
-        sessionId: ${token}\n
-        expiresAt: ${expires}`,
-      AuthService.name
-    );
-    this.logger.info(`User with email ${email} logged in`, AuthService.name);
 
     return {
       user: {
         id: user.id,
         email: user.email,
       },
-      sessionId: token,
+      sessionId: session.sessionId,
     };
   }
 

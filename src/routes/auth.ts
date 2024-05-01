@@ -4,10 +4,8 @@ import { INTERFACE_TYPE } from '../config/dependencies';
 import { AuthController } from '../controllers/auth.controller';
 import { AuthService } from '../services/auth.service';
 import Logger from '../services/logger.service';
-import { TokenService } from '../services/token.service';
 import { IAuthService } from '../types/IAuthService';
 import { ILogger } from '../types/ILogger';
-import { ITokenService } from '../types/ITokenService';
 
 const router = express.Router();
 
@@ -17,7 +15,6 @@ container.bind(INTERFACE_TYPE.AuthController).to(AuthController);
 
 container.bind<ILogger>(INTERFACE_TYPE.Logger).to(Logger);
 container.bind<IAuthService>(INTERFACE_TYPE.AuthService).to(AuthService);
-container.bind<ITokenService>(INTERFACE_TYPE.TokenService).to(TokenService);
 
 const controller = container.get<AuthController>(INTERFACE_TYPE.AuthController);
 
