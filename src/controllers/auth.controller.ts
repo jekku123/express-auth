@@ -27,9 +27,9 @@ export class AuthController {
     const { email, password } = req.body;
 
     try {
-      const { sessionToken, user } = await this.authService.login(email, password);
+      const { sessionId, user } = await this.authService.login(email, password);
 
-      res.cookie('sessionToken', sessionToken, {
+      res.cookie('sessionId', sessionId, {
         httpOnly: true,
         secure: true,
         sameSite: 'none',
@@ -72,13 +72,13 @@ export class AuthController {
   async onLogout(req: Request, res: Response, next: NextFunction) {
     const cookies = req.cookies;
 
-    if (!cookies?.sessionToken) {
+    if (!cookies?.sessionId) {
       return res.sendStatus(STATUS_CODES.NO_CONTENT);
     }
 
-    this.authService.logout(cookies.sessionToken);
+    this.authService.logout(cookies.sessionId);
 
-    res.clearCookie('sessionToken', {
+    res.clearCookie('sessionId', {
       httpOnly: true,
       secure: true,
       sameSite: 'none',

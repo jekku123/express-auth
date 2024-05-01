@@ -4,7 +4,7 @@ interface SessionMethods {}
 
 export interface SessionType {
   _id: string;
-  sessionToken: string;
+  sessionId: string;
   userId: Schema.Types.ObjectId;
   expiresAt: Date;
 }
@@ -12,7 +12,7 @@ export interface SessionType {
 type SessionModel = Model<SessionType, {}, SessionMethods>;
 
 const sessionSchema = new Schema<SessionType, SessionModel, SessionMethods>({
-  sessionToken: {
+  sessionId: {
     type: String,
   },
   expiresAt: {

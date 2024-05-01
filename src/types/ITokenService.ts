@@ -5,5 +5,5 @@ export type TokenPayload = {
 };
 
 export interface ITokenService {
-  generateSessionToken(): TokenPayload;
+  generatesessionId(): TokenPayload;
 }

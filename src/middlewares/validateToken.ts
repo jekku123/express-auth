@@ -19,7 +19,7 @@ export const validateToken = async (req: Request, res: Response, next: NextFunct
       throw new AppError(ERROR_MESSAGES.MISSING_TOKEN, STATUS_CODES.BAD_REQUEST);
     }
 
-    const session = await Session.findOne({ sessionToken: token });
+    const session = await Session.findOne({ sessionId: token });
 
     if (!session) {
       throw new AppError(ERROR_MESSAGES.INVALID_TOKEN, STATUS_CODES.UNAUTHORIZED);

@@ -63,7 +63,7 @@ export class AuthService implements IAuthService {
       });
     }
 
-    const { token, expires } = this.tokenService.generateSessionToken();
+    const { token, expires } = this.tokenService.generatesessionId();
 
     account.expiresAt = new Date(expires);
     account.sessionState = 'active';
@@ -76,7 +76,7 @@ export class AuthService implements IAuthService {
 
     const session = Session.create({
       userId: user.id,
-      sessionToken: token,
+      sessionId: token,
       expiresAt: expires,
     });
 
@@ -86,7 +86,7 @@ export class AuthService implements IAuthService {
 
     this.logger.info(
       `Session created for user with email ${email}\n
-        sessionToken: ${token}\n
+        sessionId: ${token}\n
         expiresAt: ${expires}`,
       AuthService.name
     );
@@ -97,12 +97,12 @@ export class AuthService implements IAuthService {
         id: user.id,
         email: user.email,
       },
-      sessionToken: token,
+      sessionId: token,
     };
   }
 
-  async logout(sessionToken: string) {
-    const session = await Session.findOne({ sessionToken });
+  async logout(sessionId: string) {
+    const session = await Session.findOne({ sessionId });
 
     if (!session) {
       throw new AppError('Logout failed, session not found', STATUS_CODES.INTERNAL_SERVER_ERROR);
@@ -128,7 +128,7 @@ export class AuthService implements IAuthService {
 
     this.logger.info(`Account with id ${account.userId} logged out`, AuthService.name);
 
-    const deletedSession = await Session.deleteOne({ sessionToken });
+    const deletedSession = await Session.deleteOne({ sessionId });
 
     if (!deletedSession) {
       throw new AppError('Failed to delete session', STATUS_CODES.INTERNAL_SERVER_ERROR);

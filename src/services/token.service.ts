@@ -10,7 +10,7 @@ export class TokenService implements ITokenService {
   // 7 days
   private refreshTokenExpires = 7 * 24 * 60 * 60 * 1000;
 
-  generateSessionToken() {
+  generatesessionId() {
     const rand64 = crypto.randomBytes(64).toString('base64');
     const expires = new Date(Date.now() + TokenService.SESSION_TOKEN_EXPIRES).toISOString();
 
