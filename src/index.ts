@@ -7,6 +7,7 @@ import 'reflect-metadata';
 import { errorHandler } from './middlewares/errorHandler';
 import authRoutes from './routes/auth';
 
+import morgan from 'morgan';
 import { corsOptions } from './config/corsOptions';
 import userRoutes from './routes/user';
 
@@ -19,6 +20,7 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(cors(corsOptions));
 app.use(helmet());
+app.use(morgan('dev'));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);

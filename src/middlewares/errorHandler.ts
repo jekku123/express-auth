@@ -1,49 +1,59 @@
-import { NextFunction, Request, Response } from 'express';
-import { JsonWebTokenError } from 'jsonwebtoken';
+import { Request, Response } from 'express';
 import AppError from '../config/errors/AppError';
 import { ERROR_MESSAGES } from '../config/errors/errorMessages';
 import { STATUS_CODES } from '../config/errors/statusCodes';
-import Logger from '../services/logger.service';
+import { ILogger } from '../types/ILogger';
 
-export const errorHandler = (err: Error, req: Request, res: Response, next: NextFunction) => {
-  const logger = new Logger();
+import { MongooseError } from 'mongoose';
+import container from '../config/container';
+import { INTERFACE_TYPE } from '../config/dependencies';
 
-  if (err instanceof AppError) {
-    const { statusCode } = err;
+const createErrorHandler = (logger: ILogger) => {
+  return (err: Error, req: Request, res: Response) => {
+    // Log the error
     logger.error(err);
 
-    return res.status(statusCode).send({
-      statusCode,
+    // Handle AppError instances
+    if (err instanceof AppError) {
+      const { statusCode } = err;
+
+      return res.status(statusCode).send({
+        statusCode,
+        success: false,
+        errors: {
+          message: err.message,
+          stack: req.app.get('env') === 'production' ? undefined : err.stack,
+          context: err.context,
+        },
+      });
+    }
+
+    // Handle Mongoose error instances
+    if (err instanceof MongooseError) {
+      return res.status(STATUS_CODES.UNAUTHORIZED).send({
+        statusCode: STATUS_CODES.UNAUTHORIZED,
+        success: false,
+        errors: {
+          message: err.message,
+          stack: req.app.get('env') === 'production' ? undefined : err.stack,
+        },
+      });
+    }
+
+    // Handle all other errors
+    return res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).send({
+      statusCode: STATUS_CODES.INTERNAL_SERVER_ERROR,
       success: false,
       errors: {
-        message: err.message,
-        stack: Bun.env.NODE_ENV === 'production' ? undefined : err.stack,
-        context: err.context,
+        message: ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
+        stack: req.app.get('env') === 'production' ? undefined : err.stack,
       },
     });
-  }
-
-  if (err instanceof JsonWebTokenError) {
-    logger.error(err);
-
-    return res.status(STATUS_CODES.UNAUTHORIZED).send({
-      statusCode: STATUS_CODES.UNAUTHORIZED,
-      success: false,
-      errors: {
-        message: err.message,
-        stack: Bun.env.NODE_ENV === 'production' ? undefined : err.stack,
-      },
-    });
-  }
-
-  logger.error(err);
-
-  return res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).send({
-    statusCode: STATUS_CODES.INTERNAL_SERVER_ERROR,
-    success: false,
-    errors: {
-      message: ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
-      stack: Bun.env.NODE_ENV === 'production' ? undefined : err.stack,
-    },
-  });
+  };
 };
+
+// Resolve the ILogger instance from the container
+const logger = container.get<ILogger>(INTERFACE_TYPE.Logger);
+
+// Create the error handler middleware with the injected logger
+export const errorHandler = createErrorHandler(logger);

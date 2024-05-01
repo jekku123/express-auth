@@ -22,6 +22,7 @@ const sessionSchema = new Schema<SessionType, SessionModel, SessionMethods>({
   },
   expiresAt: {
     type: Date,
+    expires: SESSION_ID_EXPIRES / 1000,
     default: () => Date.now() + SESSION_ID_EXPIRES,
   },
   userId: {
