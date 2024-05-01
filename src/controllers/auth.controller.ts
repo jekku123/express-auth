@@ -8,10 +8,17 @@ import Account from '../models/account';
 import Session from '../models/session';
 import User from '../models/user';
 import VerificationToken from '../models/verificationToken';
+import { IAuthController } from '../types/IAuthController';
 import { IAuthService } from '../types/IAuthService';
 
+/**
+ * @route /api/auth
+ * @desc Controller for authentication routes
+ * @access Public
+ * @param {IAuthService} authService - Service for authentication
+ */
 @injectable()
-export class AuthController {
+export class AuthController implements IAuthController {
   private authService: IAuthService;
 
   constructor(@inject(INTERFACE_TYPE.AuthService) authService: IAuthService) {
@@ -19,8 +26,8 @@ export class AuthController {
   }
 
   /**
-   * @route POST /api/auth/register
-   * @desc Register a new user
+   * @route POST /api/auth/login
+   * @desc Login
    * @access Public
    */
   async onLogin(req: Request, res: Response, next: NextFunction) {
@@ -28,10 +35,29 @@ export class AuthController {
 
     try {
       const { sessionId, user } = await this.authService.login(email, password);
-
       res.cookie('sessionId', sessionId, cookieSettings.httpOnly);
-
       res.status(STATUS_CODES.OK).send(user);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * @route GET /api/auth/logout
+   * @desc Logout
+   * @access Public
+   */
+  async onLogout(req: Request, res: Response, next: NextFunction) {
+    const cookies = req.cookies;
+
+    if (!cookies?.sessionId) {
+      return res.sendStatus(STATUS_CODES.NO_CONTENT);
+    }
+
+    try {
+      this.authService.logout(cookies.sessionId);
+      res.clearCookie('sessionId', cookieSettings.httpOnly);
+      res.status(STATUS_CODES.OK).send({ message: 'Logged out' });
     } catch (error) {
       next(error);
     }
@@ -60,33 +86,15 @@ export class AuthController {
   }
 
   /**
-   * @route GET /api/auth/logout
-   * @desc Logout
+   * @route GET /api/auth/verify-email
+   * @desc Verify email
    * @access Public
    */
-  async onLogout(req: Request, res: Response, next: NextFunction) {
-    const cookies = req.cookies;
-
-    if (!cookies?.sessionId) {
-      return res.sendStatus(STATUS_CODES.NO_CONTENT);
-    }
-
-    this.authService.logout(cookies.sessionId);
-
-    res.clearCookie('sessionId', cookieSettings.httpOnly);
-
-    res.status(STATUS_CODES.OK).send({ message: 'Logged out' });
-  }
-
-  /**
-   * @route GET /api/auth/verify-email
-   */
-
   async onVerifyEmail(req: Request, res: Response, next: NextFunction) {
-    const { userId, token } = req.query;
+    const { token } = req.query;
 
     try {
-      await this.authService.verifyEmail(userId as string, token as string);
+      await this.authService.verifyEmail(token as string);
       res.status(STATUS_CODES.OK).send('Email verified');
     } catch (error) {
       next(error);

@@ -1,5 +1,5 @@
-import crypto from 'crypto';
 import mongoose, { Model, Schema } from 'mongoose';
+import { generateRandomString } from '../utils';
 
 export const SESSION_ID_EXPIRES = 2 * 60 * 1000;
 export const SESSION_EXPIRATION_THRESHOLD = 1 * 60 * 1000;
@@ -18,7 +18,7 @@ type SessionModel = Model<SessionType, {}, SessionMethods>;
 const sessionSchema = new Schema<SessionType, SessionModel, SessionMethods>({
   sessionId: {
     type: String,
-    default: () => crypto.randomBytes(32).toString('hex'),
+    default: () => generateRandomString(),
   },
   expiresAt: {
     type: Date,

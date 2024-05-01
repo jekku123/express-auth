@@ -5,8 +5,8 @@ import Account, { AccountType } from './account';
 
 interface UserMethods {
   verifyPassword: (password: string) => Promise<boolean>;
-  setPassword: (password: string) => Promise<UserType>;
   linkAccount: (userId: string, email: string) => Promise<AccountType>;
+  findByEmail: (email: string) => Promise<UserType>;
 }
 
 export interface UserType {
@@ -49,13 +49,12 @@ userSchema.pre('save', async function (next) {
   next();
 });
 
-userSchema.method('verifyPassword', async function (password: string) {
-  return await Bun.password.verify(password, this.password);
+userSchema.static('findByEmail', async function (email: string) {
+  return await this.findOne({ email });
 });
 
-userSchema.method('setPassword', async function (password: string) {
-  this.password = await Bun.password.hash(password);
-  return this;
+userSchema.method('verifyPassword', async function (password: string) {
+  return await Bun.password.verify(password, this.password);
 });
 
 userSchema.method('linkAccount', async function (userId: string, email: string) {

@@ -9,53 +9,52 @@ import User, { UserType } from '../models/user';
 
 import VerificationToken from '../models/verificationToken';
 import { ILogger } from '../types/ILogger';
+import { IMailerService } from '../types/IMailerService';
 import { IUserService } from '../types/IUserService';
 
 @injectable()
 export class UserService implements IUserService {
   private logger: ILogger;
+  private mailerService: IMailerService;
 
-  constructor(@inject(INTERFACE_TYPE.Logger) logger: ILogger) {
+  constructor(
+    @inject(INTERFACE_TYPE.Logger) logger: ILogger,
+    @inject(INTERFACE_TYPE.MailerService) mailerService: IMailerService
+  ) {
     this.logger = logger;
+    this.mailerService = mailerService;
   }
 
-  async register(email: string, password: string): Promise<UserType> {
+  async createUser(email: string, password: string): Promise<UserType> {
     if (!email || !password) {
       throw new AppError(ERROR_MESSAGES.MISSING_CREDENTIALS, STATUS_CODES.BAD_REQUEST);
     }
 
-    const user = await User.findOne({ email });
+    const existingUser = await User.findOne({ email });
 
-    if (user) {
+    if (existingUser) {
       throw new AppError(ERROR_MESSAGES.USER_ALREADY_EXISTS, STATUS_CODES.CONFLICT, { email });
     }
 
-    const userObj = new User({ email, password });
-    const userId = userObj.id;
+    const user = new User({ email, password });
+    const verificationToken = new VerificationToken({ identifier: email });
 
-    const isToken = await VerificationToken.findOne({
-      userId,
-    });
-
-    if (isToken) {
-      throw new AppError('Verification token already exists', STATUS_CODES.BAD_REQUEST);
-    }
-
-    const verificationToken = new VerificationToken({ userId });
     const savedToken = await verificationToken.save();
+    const savedUser = await user.save();
 
     if (!savedToken) {
       throw new AppError('Verification token not created', STATUS_CODES.INTERNAL_SERVER_ERROR);
     }
-    const newUser = await userObj.save();
 
-    if (!newUser) {
-      throw new AppError(ERROR_MESSAGES.INTERNAL_SERVER_ERROR, STATUS_CODES.INTERNAL_SERVER_ERROR);
+    if (!savedUser) {
+      throw new AppError('User not saved', STATUS_CODES.INTERNAL_SERVER_ERROR);
     }
+
+    await this.mailerService.sendVerificationEmail(savedToken.identifier, savedToken.token);
 
     this.logger.info(`User with email ${email} registered`, UserService.name);
 
-    return newUser;
+    return savedUser;
   }
 
   async getUserProfile(id: string): Promise<UserType> {
@@ -69,38 +68,29 @@ export class UserService implements IUserService {
   }
 
   async updatePassword(
-    email: string,
+    userId: string,
     oldPassword: string,
     newPassword: string
   ): Promise<UserType | null> {
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ _id: userId });
 
     if (!user) {
-      throw new AppError(ERROR_MESSAGES.USER_NOT_FOUND, STATUS_CODES.NOT_FOUND, { email });
+      throw new AppError(ERROR_MESSAGES.USER_NOT_FOUND, STATUS_CODES.NOT_FOUND);
     }
 
-    if (!user || !(await Bun.password.verify(oldPassword, user.password))) {
+    if (!(await user.verifyPassword(oldPassword))) {
       throw new AppError(ERROR_MESSAGES.INVALID_CREDENTIALS, STATUS_CODES.UNAUTHORIZED);
     }
 
-    const hashedPassword = await Bun.password.hash(newPassword);
-    const updatedUser = await User.findOneAndUpdate(
-      {
-        email,
-      },
-      {
-        password: hashedPassword,
-      },
-      {
-        new: true,
-      }
-    );
+    user.password = newPassword;
+
+    const updatedUser = await user.save();
 
     if (!updatedUser) {
       throw new AppError(ERROR_MESSAGES.INTERNAL_SERVER_ERROR, STATUS_CODES.INTERNAL_SERVER_ERROR);
     }
 
-    this.logger.info(`User with email ${email} updated password`, UserService.name);
+    this.logger.info(`User with email ${user.email} updated password`, UserService.name);
 
     return updatedUser;
   }

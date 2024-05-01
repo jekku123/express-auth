@@ -148,43 +148,44 @@ export class AuthService implements IAuthService {
     };
   }
 
-  async verifyEmail(userId: string, token: string) {
-    if (!userId || !token) {
+  async verifyEmail(token: string) {
+    if (!token) {
       throw new AppError(ERROR_MESSAGES.BAD_REQUEST, STATUS_CODES.BAD_REQUEST);
     }
-    const foundToken = await VerificationToken.findOne({ userId });
+    const existingToken = await VerificationToken.findOne({ token });
 
-    if (!foundToken) {
+    if (!existingToken) {
       throw new AppError('Verification token not found', STATUS_CODES.NOT_FOUND);
     }
 
-    const result = foundToken.verifyToken(token);
+    const hasExpired = existingToken.expiresAt < new Date(Date.now());
 
-    if (!result.success) {
-      throw new AppError(result.message, STATUS_CODES.UNAUTHORIZED);
+    if (hasExpired) {
+      throw new AppError('Verification token expired', STATUS_CODES.UNAUTHORIZED);
     }
 
-    const user = await User.findById(userId);
+    const existingUser = await User.findOne({ email: existingToken.identifier });
 
-    if (!user) {
-      throw new AppError(ERROR_MESSAGES.USER_NOT_FOUND, STATUS_CODES.NOT_FOUND, { userId });
+    if (!existingUser) {
+      throw new AppError(ERROR_MESSAGES.USER_NOT_FOUND, STATUS_CODES.NOT_FOUND, {
+        email: existingToken.identifier,
+      });
     }
 
-    const linked = await user.linkAccount(userId, user.email);
+    existingUser.emailVerified = true;
+
+    const linked = await existingUser.linkAccount(existingUser.id, existingUser.email);
 
     if (!linked) {
       throw new AppError('Failed linking account', STATUS_CODES.INTERNAL_SERVER_ERROR);
     }
 
-    user.emailVerified = true;
-    await user.save();
+    await existingUser.save();
+    await VerificationToken.deleteOne({ token: existingToken.token });
 
-    const deletedToken = await VerificationToken.deleteOne({ userId });
-
-    if (!deletedToken) {
-      throw new AppError(ERROR_MESSAGES.INTERNAL_SERVER_ERROR, STATUS_CODES.INTERNAL_SERVER_ERROR);
-    }
-
-    this.logger.info(`User with id ${userId} verified email`, AuthService.name);
+    this.logger.info(
+      `User with email ${existingUser.email} has verified an account`,
+      AuthService.name
+    );
   }
 }

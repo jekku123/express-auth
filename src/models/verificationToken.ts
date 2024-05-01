@@ -1,5 +1,5 @@
-import { randomUUID } from 'crypto';
 import mongoose, { Model, Schema } from 'mongoose';
+import { generateRandomString } from '../utils';
 
 interface VerificationTokenMethods {
   verifyToken: (token: string) => {
@@ -10,8 +10,8 @@ interface VerificationTokenMethods {
 
 export interface VerificationTokenType {
   _id: string;
-  verificationToken: string;
-  userId: Schema.Types.ObjectId;
+  token: string;
+  identifier: string;
   expiresAt: Date;
 }
 
@@ -22,18 +22,17 @@ const verificationTokenSchema = new Schema<
   VerificationTokenModel,
   VerificationTokenMethods
 >({
-  verificationToken: {
+  token: {
     type: String,
-    default: () => randomUUID(),
+    default: () => generateRandomString(),
   },
   expiresAt: {
     type: Date,
     default: Date.now() + 24 * 60 * 60 * 1000,
   },
-  userId: {
-    type: Schema.Types.ObjectId,
-    ref: 'User',
-    required: [true, 'userId is required'],
+  identifier: {
+    type: String,
+    required: [true, 'identifier is required'],
   },
 });
 
@@ -42,12 +41,6 @@ verificationTokenSchema.method('verifyToken', function (token: string) {
     return {
       success: false,
       message: 'Verification token expired',
-    };
-  }
-  if (this.verificationToken !== token) {
-    return {
-      success: false,
-      message: 'Invalid verification token',
     };
   }
   return {
