@@ -1,7 +1,7 @@
 import mongoose, { HydratedDocument, Model, Schema } from 'mongoose';
 
 export interface IUser {
-  id: string;
+  _id: string;
   name?: string;
   email: string;
   image?: string;
@@ -11,6 +11,7 @@ export interface IUser {
 
 interface IUserMethods {
   verifyPassword: (password: string) => Promise<boolean>;
+  updatePassword: (password: string) => Promise<IUser>;
 }
 
 interface IUserStatics {
@@ -46,6 +47,11 @@ userSchema.pre('save', async function (next) {
     this.password = await Bun.password.hash(this.password);
   }
   next();
+});
+
+userSchema.method('updatePassword', async function (password: string) {
+  this.password = password;
+  return this.save();
 });
 
 userSchema.method('verifyPassword', async function (password: string) {

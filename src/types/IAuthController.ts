@@ -8,5 +8,9 @@ export interface IAuthController {
     next: NextFunction
   ): Promise<Response<any, Record<string, any>> | undefined>;
   onRefreshToken(req: Request, res: Response, next: NextFunction): Promise<void>;
-  onVerifyEmail(req: Request, res: Response, next: NextFunction): Promise<void>;
+  onVerifyEmail(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<Response<any, Record<string, any>> | undefined>;
 }

@@ -9,6 +9,5 @@ export type LoginServiceResponse = {
 export interface IAuthService {
   login(email: string, password: string): Promise<LoginServiceResponse>;
   logout(sessionId: string): Promise<any>;
-  refreshToken(token: string): Promise<any>;
   verifyEmail(token: string): Promise<void>;
 }

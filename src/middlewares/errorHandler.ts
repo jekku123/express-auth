@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import AppError from '../config/errors/AppError';
 import { ERROR_MESSAGES } from '../config/errors/errorMessages';
 import { STATUS_CODES } from '../config/errors/statusCodes';
@@ -8,7 +8,7 @@ import container from '../config/container';
 import { INTERFACE_TYPE } from '../config/dependencies';
 
 const createErrorHandler = (logger: ILoggerService) => {
-  return (err: Error, _req: Request, res: Response) => {
+  return (err: Error, _req: Request, res: Response, next: NextFunction) => {
     // Log the error
     logger.error(err);
 
@@ -16,7 +16,7 @@ const createErrorHandler = (logger: ILoggerService) => {
     if (err instanceof AppError) {
       const { statusCode, message, context, stack } = err;
 
-      res.status(statusCode).send({
+      return res.status(statusCode).send({
         statusCode,
         success: false,
         errors: {
@@ -25,11 +25,9 @@ const createErrorHandler = (logger: ILoggerService) => {
           context,
         },
       });
-
-      return;
     }
 
-    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).send({
+    return res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).send({
       statusCode: STATUS_CODES.INTERNAL_SERVER_ERROR,
       success: false,
       errors: {
@@ -37,10 +35,8 @@ const createErrorHandler = (logger: ILoggerService) => {
         stack: Bun.env.NODE_ENV === 'production' ? undefined : err.stack,
       },
     });
-
-    return;
   };
 };
 
-const logger = container.get<ILoggerService>(INTERFACE_TYPE.Logger);
+const logger = container.get<ILoggerService>(INTERFACE_TYPE.LoggerService);
 export const errorHandler = createErrorHandler(logger);

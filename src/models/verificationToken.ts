@@ -19,6 +19,9 @@ interface IVerificationTokenStatics {
   findByEmail: (
     email: string
   ) => Promise<HydratedDocument<IVerificationToken, IVerificationTokenMethods>> | null;
+  findByToken: (
+    token: string
+  ) => Promise<HydratedDocument<IVerificationToken, IVerificationTokenMethods>> | null;
 }
 
 type VerificationTokenModel = Model<IVerificationToken, {}, IVerificationTokenMethods> &
@@ -58,6 +61,10 @@ verificationTokenSchema.method('verifyToken', function (token: string) {
 
 verificationTokenSchema.static('findByEmail', function (email: string) {
   return this.findOne({ email });
+});
+
+verificationTokenSchema.static('findByToken', function (token: string) {
+  return this.findOne({ token });
 });
 
 const VerificationToken = mongoose.model<IVerificationToken, VerificationTokenModel>(

@@ -6,12 +6,20 @@ const controllers = {
 const services = {
   AuthService: Symbol.for('AuthService'),
   UserService: Symbol.for('UserService'),
-  Logger: Symbol.for('Logger'),
+  LoggerService: Symbol.for('LoggerService'),
   MailerService: Symbol.for('MailerService'),
   TokenService: Symbol.for('TokenService'),
+  SessionService: Symbol.for('SessionService'),
+};
+
+const repositories = {
+  UserRepository: Symbol.for('UserRepository'),
+  SessionRepository: Symbol.for('SessionRepository'),
+  TokenRepository: Symbol.for('TokenRepository'),
 };
 
 export const INTERFACE_TYPE = {
   ...controllers,
   ...services,
+  ...repositories,
 };

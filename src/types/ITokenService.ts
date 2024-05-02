@@ -1,9 +1,8 @@
 import { IVerificationToken } from '../models/verificationToken';
 
 export interface ITokenService {
-  generateToken(email: string): Promise<IVerificationToken>;
-  verifyToken(token: string): boolean;
-  getTokenByToken(token: string): any;
-  getTokenByEmail(email: string): any;
-  deleteToken(token: string): any;
+  generateVerificationToken(email: string): Promise<IVerificationToken>;
+  deleteToken(token: string): Promise<IVerificationToken | null>;
+  findTokenByEmail(email: string): Promise<IVerificationToken | null>;
+  findTokenByToken(token: string): Promise<IVerificationToken | null>;
 }

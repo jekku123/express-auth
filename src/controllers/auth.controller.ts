@@ -90,10 +90,14 @@ export class AuthController implements IAuthController {
    * @access Public
    */
   async onVerifyEmail(req: Request, res: Response, next: NextFunction) {
-    const { token } = req.query;
+    const query = req.query;
+
+    if (!query?.token) {
+      return res.sendStatus(STATUS_CODES.NO_CONTENT);
+    }
 
     try {
-      await this.authService.verifyEmail(token as string);
+      await this.authService.verifyEmail(query.token as string);
       res.status(STATUS_CODES.OK).send('Email verified');
     } catch (error) {
       next(error);

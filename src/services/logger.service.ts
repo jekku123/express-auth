@@ -2,7 +2,7 @@ import { injectable } from 'inversify';
 import winston, { createLogger, format, transports } from 'winston';
 
 @injectable()
-export default class Logger {
+export default class LoggerService {
   private logger: winston.Logger;
 
   constructor() {
