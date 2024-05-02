@@ -4,56 +4,43 @@ import { ERROR_MESSAGES } from '../config/errors/errorMessages';
 import { STATUS_CODES } from '../config/errors/statusCodes';
 import { ILogger } from '../types/ILogger';
 
-import { MongooseError } from 'mongoose';
 import container from '../config/container';
 import { INTERFACE_TYPE } from '../config/dependencies';
 
 const createErrorHandler = (logger: ILogger) => {
-  return (err: Error, req: Request, res: Response) => {
+  return (err: Error, _req: Request, res: Response) => {
     // Log the error
     logger.error(err);
 
-    // Handle AppError instances
+    // Handle the error based on its type
     if (err instanceof AppError) {
-      const { statusCode } = err;
+      const { statusCode, message, context, stack } = err;
 
-      return res.status(statusCode).send({
+      res.status(statusCode).send({
         statusCode,
         success: false,
         errors: {
-          message: err.message,
-          stack: req.app.get('env') === 'production' ? undefined : err.stack,
-          context: err.context,
+          message,
+          stack: Bun.env.NODE_ENV === 'production' ? undefined : stack,
+          context,
         },
       });
+
+      return;
     }
 
-    // Handle Mongoose error instances
-    if (err instanceof MongooseError) {
-      return res.status(STATUS_CODES.UNAUTHORIZED).send({
-        statusCode: STATUS_CODES.UNAUTHORIZED,
-        success: false,
-        errors: {
-          message: err.message,
-          stack: req.app.get('env') === 'production' ? undefined : err.stack,
-        },
-      });
-    }
-
-    // Handle all other errors
-    return res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).send({
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).send({
       statusCode: STATUS_CODES.INTERNAL_SERVER_ERROR,
       success: false,
       errors: {
         message: ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
-        stack: req.app.get('env') === 'production' ? undefined : err.stack,
+        stack: Bun.env.NODE_ENV === 'production' ? undefined : err.stack,
       },
     });
+
+    return;
   };
 };
 
-// Resolve the ILogger instance from the container
 const logger = container.get<ILogger>(INTERFACE_TYPE.Logger);
-
-// Create the error handler middleware with the injected logger
 export const errorHandler = createErrorHandler(logger);

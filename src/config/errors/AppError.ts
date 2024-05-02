@@ -25,8 +25,4 @@ export default class AppError extends Error {
   get type(): string {
     return this.name;
   }
-
-  serializeErrors() {
-    return [{ message: this.message, context: this.context }];
-  }
 }
