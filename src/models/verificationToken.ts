@@ -1,4 +1,4 @@
-import mongoose, { Model, Schema } from 'mongoose';
+import mongoose, { HydratedDocument, Model, Schema } from 'mongoose';
 import { generateRandomString } from '../utils';
 
 export interface IVerificationToken {
@@ -15,7 +15,11 @@ interface IVerificationTokenMethods {
   };
 }
 
-interface IVerificationTokenStatics {}
+interface IVerificationTokenStatics {
+  findByEmail: (
+    email: string
+  ) => Promise<HydratedDocument<IVerificationToken, IVerificationTokenMethods>> | null;
+}
 
 type VerificationTokenModel = Model<IVerificationToken, {}, IVerificationTokenMethods> &
   IVerificationTokenStatics;
@@ -50,6 +54,10 @@ verificationTokenSchema.method('verifyToken', function (token: string) {
     success: true,
     message: 'Verification token verified',
   };
+});
+
+verificationTokenSchema.static('findByEmail', function (email: string) {
+  return this.findOne({ email });
 });
 
 const VerificationToken = mongoose.model<IVerificationToken, VerificationTokenModel>(

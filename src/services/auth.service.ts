@@ -6,17 +6,16 @@ import { ERROR_MESSAGES } from '../config/errors/errorMessages';
 import { STATUS_CODES } from '../config/errors/statusCodes';
 import { IAuthService } from '../types/IAuthService';
 
-import Account from '../models/account';
 import Session from '../models/session';
 import User from '../models/user';
 import VerificationToken from '../models/verificationToken';
-import { ILogger } from '../types/ILogger';
+import { ILoggerService } from '../types/ILoggerService';
 
 @injectable()
 export class AuthService implements IAuthService {
-  private logger: ILogger;
+  private logger: ILoggerService;
 
-  constructor(@inject(INTERFACE_TYPE.Logger) logger: ILogger) {
+  constructor(@inject(INTERFACE_TYPE.Logger) logger: ILoggerService) {
     this.logger = logger;
   }
 
@@ -31,28 +30,14 @@ export class AuthService implements IAuthService {
       throw new AppError(ERROR_MESSAGES.USER_NOT_FOUND, STATUS_CODES.NOT_FOUND, { email });
     }
 
-    if (!user.emailVerified) {
-      throw new AppError('Email not verified', STATUS_CODES.UNAUTHORIZED, {
-        email,
-      });
-    }
-
-    if (!(await Bun.password.verify(password, user.password))) {
+    if (!(await user.verifyPassword(password))) {
       throw new AppError(ERROR_MESSAGES.INVALID_CREDENTIALS, STATUS_CODES.UNAUTHORIZED, {
         email,
       });
     }
-    const account = await Account.findOne({ userId: user.id });
 
-    // TODO: Maybe link account to user if not linked here instead in emailVerification
-    if (!account) {
-      throw new AppError('Account not linked', STATUS_CODES.NOT_FOUND, {
-        email,
-      });
-    }
-
-    if (account.sessionState === 'active') {
-      throw new AppError('User already logged in', STATUS_CODES.UNAUTHORIZED, {
+    if (!user.emailVerified) {
+      throw new AppError('Email not verified', STATUS_CODES.UNAUTHORIZED, {
         email,
       });
     }
@@ -60,15 +45,6 @@ export class AuthService implements IAuthService {
     const session = new Session({
       userId: user.id,
     });
-
-    account.expiresAt = session.expiresAt;
-    account.sessionState = 'active';
-
-    const updatedAccount = await account.save();
-
-    if (!updatedAccount) {
-      throw new AppError('Failed to update account', STATUS_CODES.INTERNAL_SERVER_ERROR);
-    }
 
     const savedSession = await session.save();
 
@@ -92,26 +68,6 @@ export class AuthService implements IAuthService {
       throw new AppError('Logout failed, session not found', STATUS_CODES.INTERNAL_SERVER_ERROR);
     }
 
-    const account = await Account.findOne({ userId: session.userId });
-
-    if (!account) {
-      throw new AppError('Logout failed, account not found', STATUS_CODES.INTERNAL_SERVER_ERROR);
-    }
-
-    // delete account.expiresAt;
-    // delete account.sessionState;
-
-    account.expiresAt = undefined;
-    account.sessionState = 'inactive';
-
-    const updatedAccount = await account.save();
-
-    if (!updatedAccount) {
-      throw new AppError('Failed to update account', STATUS_CODES.INTERNAL_SERVER_ERROR);
-    }
-
-    this.logger.info(`Account with id ${account.userId} logged out`, AuthService.name);
-
     const deletedSession = await Session.deleteOne({ sessionId });
 
     if (!deletedSession) {
@@ -122,26 +78,6 @@ export class AuthService implements IAuthService {
   }
 
   async refreshToken(refreshToken: string) {
-    console.log({ refreshToken });
-    // const decoded = this.tokenService.verifyRefreshToken(refreshToken);
-
-    // if (!decoded.user) {
-    //   throw new AppError(ERROR_MESSAGES.INVALID_TOKEN, STATUS_CODES.UNAUTHORIZED);
-    // }
-
-    // const user = await User.findById(decoded.user.id);
-
-    // if (!user) {
-    //   throw new AppError(ERROR_MESSAGES.USER_NOT_FOUND, STATUS_CODES.NOT_FOUND, {
-    //     email: decoded.user.email,
-    //   });
-    // }
-
-    // const accessToken = this.tokenService.generateAccessToken();
-
-    // this.logger.info(`User with email ${user.email} refreshed token`, AuthService.name);
-
-    // return accessToken;
     return {
       token: 'accessToken',
       expires: 'sadda',
@@ -173,12 +109,6 @@ export class AuthService implements IAuthService {
     }
 
     existingUser.emailVerified = true;
-
-    const linked = await existingUser.linkAccount(existingUser.id, existingUser.email);
-
-    if (!linked) {
-      throw new AppError('Failed linking account', STATUS_CODES.INTERNAL_SERVER_ERROR);
-    }
 
     await existingUser.save();
     await VerificationToken.deleteOne({ token: existingToken.token });

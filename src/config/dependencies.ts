@@ -8,6 +8,7 @@ const services = {
   UserService: Symbol.for('UserService'),
   Logger: Symbol.for('Logger'),
   MailerService: Symbol.for('MailerService'),
+  TokenService: Symbol.for('TokenService'),
 };
 
 export const INTERFACE_TYPE = {

@@ -4,7 +4,6 @@ import { INTERFACE_TYPE } from '../config/dependencies';
 
 import { cookieSettings } from '../config/cookieSettings';
 import { STATUS_CODES } from '../config/errors/statusCodes';
-import Account from '../models/account';
 import Session from '../models/session';
 import User from '../models/user';
 import VerificationToken from '../models/verificationToken';
@@ -133,14 +132,13 @@ export class AuthController implements IAuthController {
   /**
    * @route POST /api/auth/test
    */
-  async onTest(req: Request, res: Response, next: NextFunction) {
+  async onTest(_req: Request, res: Response, next: NextFunction) {
     try {
       const users = await User.find({});
-      const accounts = await Account.find({});
       const verificationTokens = await VerificationToken.find({});
       const sessions = await Session.find({});
 
-      res.status(STATUS_CODES.OK).send({ users, accounts, verificationTokens, sessions });
+      res.status(STATUS_CODES.OK).send({ users, verificationTokens, sessions });
     } catch (error) {
       next(error);
     }

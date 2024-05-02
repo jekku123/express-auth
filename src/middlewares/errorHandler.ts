@@ -2,12 +2,12 @@ import { Request, Response } from 'express';
 import AppError from '../config/errors/AppError';
 import { ERROR_MESSAGES } from '../config/errors/errorMessages';
 import { STATUS_CODES } from '../config/errors/statusCodes';
-import { ILogger } from '../types/ILogger';
+import { ILoggerService } from '../types/ILoggerService';
 
 import container from '../config/container';
 import { INTERFACE_TYPE } from '../config/dependencies';
 
-const createErrorHandler = (logger: ILogger) => {
+const createErrorHandler = (logger: ILoggerService) => {
   return (err: Error, _req: Request, res: Response) => {
     // Log the error
     logger.error(err);
@@ -42,5 +42,5 @@ const createErrorHandler = (logger: ILogger) => {
   };
 };
 
-const logger = container.get<ILogger>(INTERFACE_TYPE.Logger);
+const logger = container.get<ILoggerService>(INTERFACE_TYPE.Logger);
 export const errorHandler = createErrorHandler(logger);

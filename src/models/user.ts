@@ -1,7 +1,4 @@
 import mongoose, { HydratedDocument, Model, Schema } from 'mongoose';
-import AppError from '../config/errors/AppError';
-import { STATUS_CODES } from '../config/errors/statusCodes';
-import Account, { IAccount } from './account';
 
 export interface IUser {
   id: string;
@@ -14,11 +11,10 @@ export interface IUser {
 
 interface IUserMethods {
   verifyPassword: (password: string) => Promise<boolean>;
-  linkAccount: (userId: string, email: string) => Promise<IAccount>;
 }
 
 interface IUserStatics {
-  findByEmail: (email: string) => Promise<HydratedDocument<IUser, IUserMethods>>;
+  findByEmail: (email: string) => Promise<HydratedDocument<IUser, IUserMethods> | null>;
 }
 
 type UserModel = Model<IUser, {}, IUserMethods> & IUserStatics;
@@ -54,21 +50,6 @@ userSchema.pre('save', async function (next) {
 
 userSchema.method('verifyPassword', async function (password: string) {
   return await Bun.password.verify(password, this.password);
-});
-
-userSchema.method('linkAccount', async function (userId: string, email: string) {
-  const account = await Account.findOne({ email });
-  if (account) {
-    throw new AppError('Email already linked', STATUS_CODES.BAD_REQUEST, { email });
-  }
-  const newAccount = new Account({ userId });
-  const savedAccount = await newAccount.save();
-
-  if (!savedAccount) {
-    throw new AppError('Account not linked', STATUS_CODES.INTERNAL_SERVER_ERROR);
-  }
-
-  return savedAccount;
 });
 
 userSchema.static('findByEmail', function (email: string) {

@@ -7,22 +7,25 @@ import { STATUS_CODES } from '../config/errors/statusCodes';
 import AppError from '../config/errors/AppError';
 import User, { IUser } from '../models/user';
 
-import VerificationToken from '../models/verificationToken';
-import { ILogger } from '../types/ILogger';
+import { ILoggerService } from '../types/ILoggerService';
 import { IMailerService } from '../types/IMailerService';
+import { ITokenService } from '../types/ITokenService';
 import { IUserService } from '../types/IUserService';
 
 @injectable()
 export class UserService implements IUserService {
-  private logger: ILogger;
+  private logger: ILoggerService;
   private mailerService: IMailerService;
+  private tokenService: ITokenService;
 
   constructor(
-    @inject(INTERFACE_TYPE.Logger) logger: ILogger,
-    @inject(INTERFACE_TYPE.MailerService) mailerService: IMailerService
+    @inject(INTERFACE_TYPE.Logger) logger: ILoggerService,
+    @inject(INTERFACE_TYPE.MailerService) mailerService: IMailerService,
+    @inject(INTERFACE_TYPE.TokenService) tokenService: ITokenService
   ) {
     this.logger = logger;
     this.mailerService = mailerService;
+    this.tokenService = tokenService;
   }
 
   async createUser(email: string, password: string): Promise<IUser> {
@@ -37,20 +40,15 @@ export class UserService implements IUserService {
     }
 
     const user = new User({ email, password });
-    const verificationToken = new VerificationToken({ identifier: email });
-
-    const savedToken = await verificationToken.save();
     const savedUser = await user.save();
-
-    if (!savedToken) {
-      throw new AppError('Verification token not created', STATUS_CODES.INTERNAL_SERVER_ERROR);
-    }
 
     if (!savedUser) {
       throw new AppError('User not saved', STATUS_CODES.INTERNAL_SERVER_ERROR);
     }
 
-    await this.mailerService.sendVerificationEmail(savedToken.identifier, savedToken.token);
+    const token = await this.tokenService.generateToken(email);
+
+    await this.mailerService.sendVerificationEmail(token.identifier, token.token);
 
     this.logger.info(`User with email ${email} registered`, UserService.name);
 
