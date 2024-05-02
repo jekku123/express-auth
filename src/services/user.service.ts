@@ -10,6 +10,7 @@ import { IUser } from '../models/user';
 import { ILoggerService } from '../types/ILoggerService';
 import { IMailerService } from '../types/IMailerService';
 import { ITokenService } from '../types/ITokenService';
+import { IUserEntity } from '../types/IUserEntity';
 import { IUserRepository } from '../types/IUserRepository';
 import { IUserService } from '../types/IUserService';
 
@@ -19,17 +20,20 @@ export class UserService implements IUserService {
   private mailerService: IMailerService;
   private tokenService: ITokenService;
   private userRepository: IUserRepository;
+  private userEntity: IUserEntity;
 
   constructor(
     @inject(INTERFACE_TYPE.LoggerService) loggerService: ILoggerService,
     @inject(INTERFACE_TYPE.MailerService) mailerService: IMailerService,
     @inject(INTERFACE_TYPE.TokenService) tokenService: ITokenService,
-    @inject(INTERFACE_TYPE.UserRepository) userRepository: IUserRepository
+    @inject(INTERFACE_TYPE.UserRepository) userRepository: IUserRepository,
+    @inject(INTERFACE_TYPE.UserEntity) userEntity: IUserEntity
   ) {
     this.loggerService = loggerService;
     this.mailerService = mailerService;
     this.tokenService = tokenService;
     this.userRepository = userRepository;
+    this.userEntity = userEntity;
   }
 
   async createUser(email: string, password: string): Promise<IUser> {

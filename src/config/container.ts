@@ -2,6 +2,7 @@ import { Container } from 'inversify';
 import { INTERFACE_TYPE } from '../config/dependencies';
 import { AuthController } from '../controllers/auth.controller';
 import { UserController } from '../controllers/user.controller';
+import { UserEntity } from '../entities/user.entity';
 import SessionRepository from '../repositories/session.repository';
 import TokenRepository from '../repositories/token.repository';
 import UserRepository from '../repositories/user.repository';
@@ -20,6 +21,7 @@ import { ISessionService } from '../types/ISessionService';
 import { ITokenRepository } from '../types/ITokenRepository';
 import { ITokenService } from '../types/ITokenService';
 import { IUserController } from '../types/IUserController';
+import { IUserEntity } from '../types/IUserEntity';
 import { IUserRepository } from '../types/IUserRepository';
 import { IUserService } from '../types/IUserService';
 
@@ -38,5 +40,7 @@ container.bind<ISessionService>(INTERFACE_TYPE.SessionService).to(SessionService
 container.bind<IUserRepository>(INTERFACE_TYPE.UserRepository).to(UserRepository);
 container.bind<ITokenRepository>(INTERFACE_TYPE.TokenRepository).to(TokenRepository);
 container.bind<ISessionRepository>(INTERFACE_TYPE.SessionRepository).to(SessionRepository);
+
+container.bind<IUserEntity>(INTERFACE_TYPE.UserEntity).to(UserEntity);
 
 export default container;

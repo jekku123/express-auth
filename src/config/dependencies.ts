@@ -18,8 +18,15 @@ const repositories = {
   TokenRepository: Symbol.for('TokenRepository'),
 };
 
+const entities = {
+  UserEntity: Symbol.for('UserEntity'),
+  // Session: Symbol.for('Session'),
+  // Token: Symbol.for('Token'),
+};
+
 export const INTERFACE_TYPE = {
   ...controllers,
   ...services,
   ...repositories,
+  ...entities,
 };
