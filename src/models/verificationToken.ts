@@ -1,26 +1,29 @@
 import mongoose, { Model, Schema } from 'mongoose';
 import { generateRandomString } from '../utils';
 
-interface VerificationTokenMethods {
-  verifyToken: (token: string) => {
-    success: boolean;
-    message: string;
-  };
-}
-
-export interface VerificationTokenType {
+export interface IVerificationToken {
   _id: string;
   token: string;
   identifier: string;
   expiresAt: Date;
 }
 
-type VerificationTokenModel = Model<VerificationTokenType, {}, VerificationTokenMethods>;
+interface IVerificationTokenMethods {
+  verifyToken: (token: string) => {
+    success: boolean;
+    message: string;
+  };
+}
+
+interface IVerificationTokenStatics {}
+
+type VerificationTokenModel = Model<IVerificationToken, {}, IVerificationTokenMethods> &
+  IVerificationTokenStatics;
 
 const verificationTokenSchema = new Schema<
-  VerificationTokenType,
+  IVerificationToken,
   VerificationTokenModel,
-  VerificationTokenMethods
+  IVerificationTokenMethods
 >({
   token: {
     type: String,
@@ -49,6 +52,9 @@ verificationTokenSchema.method('verifyToken', function (token: string) {
   };
 });
 
-const VerificationToken = mongoose.model('VerificationToken', verificationTokenSchema);
+const VerificationToken = mongoose.model<IVerificationToken, VerificationTokenModel>(
+  'VerificationToken',
+  verificationTokenSchema
+);
 
 export default VerificationToken;

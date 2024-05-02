@@ -1,8 +1,6 @@
 import mongoose, { Model, Schema } from 'mongoose';
 
-interface AccountMethods {}
-
-export interface AccountType {
+export interface IAccount {
   _id: string;
   refreshToken?: string;
   expiresAt?: Date;
@@ -10,9 +8,12 @@ export interface AccountType {
   userId: Schema.Types.ObjectId;
 }
 
-type AccountModel = Model<AccountType, {}, AccountMethods>;
+interface IAccountMethods {}
+interface IAccountStatics {}
 
-const accountSchema = new Schema<AccountType, AccountModel, AccountMethods>({
+type AccountModel = Model<IAccount, {}, IAccountMethods> & IAccountStatics;
+
+const accountSchema = new Schema<IAccount, AccountModel, IAccountMethods>({
   refreshToken: {
     type: String,
   },
@@ -31,6 +32,6 @@ const accountSchema = new Schema<AccountType, AccountModel, AccountMethods>({
   },
 });
 
-const Account = mongoose.model('Account', accountSchema);
+const Account = mongoose.model<IAccount, AccountModel>('Account', accountSchema);
 
 export default Account;

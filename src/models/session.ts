@@ -4,18 +4,19 @@ import { generateRandomString } from '../utils';
 export const SESSION_ID_EXPIRES = 2 * 60 * 1000;
 export const SESSION_EXPIRATION_THRESHOLD = 1 * 60 * 1000;
 
-interface SessionMethods {}
-
-export interface SessionType {
+export interface ISession {
   _id: string;
   sessionId: string;
   userId: Schema.Types.ObjectId;
   expiresAt: Date;
 }
 
-type SessionModel = Model<SessionType, {}, SessionMethods>;
+interface ISessionMethods {}
+interface ISessionStatics {}
 
-const sessionSchema = new Schema<SessionType, SessionModel, SessionMethods>({
+type SessionModel = Model<ISession, {}, ISessionMethods> & ISessionStatics;
+
+const sessionSchema = new Schema<ISession, SessionModel, ISessionMethods>({
   sessionId: {
     type: String,
     default: () => generateRandomString(),
@@ -32,6 +33,6 @@ const sessionSchema = new Schema<SessionType, SessionModel, SessionMethods>({
   },
 });
 
-const Session = mongoose.model('Session', sessionSchema);
+const Session = mongoose.model<ISession, SessionModel>('Session', sessionSchema);
 
 export default Session;

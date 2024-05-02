@@ -5,7 +5,7 @@ import { ERROR_MESSAGES } from '../config/errors/errorMessages';
 import { STATUS_CODES } from '../config/errors/statusCodes';
 
 import AppError from '../config/errors/AppError';
-import User, { UserType } from '../models/user';
+import User, { IUser } from '../models/user';
 
 import VerificationToken from '../models/verificationToken';
 import { ILogger } from '../types/ILogger';
@@ -25,12 +25,12 @@ export class UserService implements IUserService {
     this.mailerService = mailerService;
   }
 
-  async createUser(email: string, password: string): Promise<UserType> {
+  async createUser(email: string, password: string): Promise<IUser> {
     if (!email || !password) {
       throw new AppError(ERROR_MESSAGES.MISSING_CREDENTIALS, STATUS_CODES.BAD_REQUEST);
     }
 
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findByEmail(email);
 
     if (existingUser) {
       throw new AppError(ERROR_MESSAGES.USER_ALREADY_EXISTS, STATUS_CODES.CONFLICT, { email });
@@ -57,7 +57,7 @@ export class UserService implements IUserService {
     return savedUser;
   }
 
-  async getUserProfile(id: string): Promise<UserType> {
+  async getUserProfile(id: string): Promise<IUser> {
     const user = await User.findById(id);
 
     if (!user) {
@@ -67,12 +67,8 @@ export class UserService implements IUserService {
     return user;
   }
 
-  async updatePassword(
-    userId: string,
-    oldPassword: string,
-    newPassword: string
-  ): Promise<UserType | null> {
-    const user = await User.findOne({ _id: userId });
+  async updatePassword(userId: string, oldPassword: string, newPassword: string): Promise<IUser> {
+    const user = await User.findById(userId);
 
     if (!user) {
       throw new AppError(ERROR_MESSAGES.USER_NOT_FOUND, STATUS_CODES.NOT_FOUND);

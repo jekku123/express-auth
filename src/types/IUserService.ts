@@ -1,12 +1,8 @@
-import { UserType } from '../models/user';
+import { IUser } from '../models/user';
 
 export interface IUserService {
-  createUser(email: string, password: string): Promise<UserType>;
+  createUser(email: string, password: string): Promise<IUser>;
 
-  getUserProfile(userId: string): Promise<UserType>;
-  updatePassword(
-    userId: string,
-    oldPassword: string,
-    newPassword: string
-  ): Promise<UserType | null>;
+  getUserProfile(userId: string): Promise<IUser>;
+  updatePassword(userId: string, oldPassword: string, newPassword: string): Promise<IUser | null>;
 }

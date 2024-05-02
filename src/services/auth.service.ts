@@ -25,7 +25,7 @@ export class AuthService implements IAuthService {
       throw new AppError(ERROR_MESSAGES.MISSING_CREDENTIALS, STATUS_CODES.BAD_REQUEST);
     }
 
-    const user = await User.findOne({ email });
+    const user = await User.findByEmail(email);
 
     if (!user) {
       throw new AppError(ERROR_MESSAGES.USER_NOT_FOUND, STATUS_CODES.NOT_FOUND, { email });
@@ -164,7 +164,7 @@ export class AuthService implements IAuthService {
       throw new AppError('Verification token expired', STATUS_CODES.UNAUTHORIZED);
     }
 
-    const existingUser = await User.findOne({ email: existingToken.identifier });
+    const existingUser = await User.findByEmail(existingToken.identifier);
 
     if (!existingUser) {
       throw new AppError(ERROR_MESSAGES.USER_NOT_FOUND, STATUS_CODES.NOT_FOUND, {

@@ -1,16 +1,10 @@
-import mongoose, { Model, Schema } from 'mongoose';
+import mongoose, { HydratedDocument, Model, Schema } from 'mongoose';
 import AppError from '../config/errors/AppError';
 import { STATUS_CODES } from '../config/errors/statusCodes';
-import Account, { AccountType } from './account';
+import Account, { IAccount } from './account';
 
-interface UserMethods {
-  verifyPassword: (password: string) => Promise<boolean>;
-  linkAccount: (userId: string, email: string) => Promise<AccountType>;
-  findByEmail: (email: string) => Promise<UserType>;
-}
-
-export interface UserType {
-  _id: string;
+export interface IUser {
+  id: string;
   name?: string;
   email: string;
   image?: string;
@@ -18,9 +12,18 @@ export interface UserType {
   password: string;
 }
 
-type UserModel = Model<UserType, {}, UserMethods>;
+interface IUserMethods {
+  verifyPassword: (password: string) => Promise<boolean>;
+  linkAccount: (userId: string, email: string) => Promise<IAccount>;
+}
 
-const userSchema = new Schema<UserType, UserModel, UserMethods>({
+interface IUserStatics {
+  findByEmail: (email: string) => Promise<HydratedDocument<IUser, IUserMethods>>;
+}
+
+type UserModel = Model<IUser, {}, IUserMethods> & IUserStatics;
+
+const userSchema = new Schema<IUser, UserModel, IUserMethods>({
   name: {
     type: String,
   },
@@ -49,10 +52,6 @@ userSchema.pre('save', async function (next) {
   next();
 });
 
-userSchema.static('findByEmail', async function (email: string) {
-  return await this.findOne({ email });
-});
-
 userSchema.method('verifyPassword', async function (password: string) {
   return await Bun.password.verify(password, this.password);
 });
@@ -72,6 +71,10 @@ userSchema.method('linkAccount', async function (userId: string, email: string) 
   return savedAccount;
 });
 
-const User = mongoose.model('User', userSchema);
+userSchema.static('findByEmail', function (email: string) {
+  return this.findOne({ email });
+});
+
+const User = mongoose.model<IUser, UserModel>('User', userSchema);
 
 export default User;
