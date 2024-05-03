@@ -2,8 +2,10 @@ import { inject, injectable } from 'inversify';
 import { INTERFACE_TYPE } from '../config/dependencies';
 import AppError from '../config/errors/AppError';
 import { STATUS_CODES } from '../config/errors/statusCodes';
-import { IVerificationToken } from '../models/verificationToken';
+import { IVerificationToken } from '../models/verification-token';
 
+import { ERROR_MESSAGES } from '../config/errors/errorMessages';
+import { IUserService } from '../types/IUserService';
 import { IVerificationRepository } from '../types/IVerificationRepository';
 import { IVerificationService } from '../types/IVerificationService';
 
@@ -12,11 +14,12 @@ export default class VerificationService implements IVerificationService {
   private verificationRepository: IVerificationRepository;
 
   constructor(
-    @inject(INTERFACE_TYPE.TokenRepository) verificationRepository: IVerificationRepository
+    @inject(INTERFACE_TYPE.VerificationRepository) verificationRepository: IVerificationRepository,
+    @inject(INTERFACE_TYPE.UserService) userService: IUserService
   ) {
     this.verificationRepository = verificationRepository;
   }
-  async generateVerificationToken(email: string): Promise<IVerificationToken> {
+  async createVerificationToken(email: string): Promise<IVerificationToken> {
     const existingToken = await this.verificationRepository.find({ identifier: email });
 
     if (existingToken) {
@@ -25,11 +28,29 @@ export default class VerificationService implements IVerificationService {
 
     const verificationToken = this.verificationRepository.create(email);
 
-    if (!verificationToken) {
-      throw new AppError('Verification token not created', STATUS_CODES.INTERNAL_SERVER_ERROR);
+    return verificationToken;
+  }
+
+  async useVerificationToken(token: string): Promise<IVerificationToken> {
+    if (!token) {
+      throw new AppError(ERROR_MESSAGES.BAD_REQUEST, STATUS_CODES.BAD_REQUEST);
     }
 
-    return verificationToken;
+    const existingToken = await this.verificationRepository.find({ token });
+
+    if (!existingToken) {
+      throw new AppError('Verification token not found', STATUS_CODES.NOT_FOUND);
+    }
+
+    const hasExpired = existingToken.expiresAt < new Date(Date.now());
+
+    if (hasExpired) {
+      throw new AppError('Verification token expired', STATUS_CODES.UNAUTHORIZED);
+    }
+
+    await this.verificationRepository.delete(existingToken.token);
+
+    return existingToken;
   }
 
   async deleteToken(token: string): Promise<IVerificationToken> {
@@ -40,15 +61,5 @@ export default class VerificationService implements IVerificationService {
     }
 
     return deletedToken;
-  }
-
-  async findTokenByToken(token: string): Promise<IVerificationToken | null> {
-    const foundToken = await this.verificationRepository.find({ token });
-    return foundToken;
-  }
-
-  async findTokenByEmail(email: string): Promise<IVerificationToken | null> {
-    const token = await this.verificationRepository.find({ identifier: email });
-    return token;
   }
 }

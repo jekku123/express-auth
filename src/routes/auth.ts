@@ -10,6 +10,7 @@ const controller = container.get<AuthController>(INTERFACE_TYPE.AuthController);
 router.post('/login', controller.onLogin.bind(controller));
 router.get('/refresh', controller.onRefreshToken.bind(controller));
 router.post('/verify-email', controller.onVerifyEmail.bind(controller));
+router.post('/reset-password', controller.onResetPassword.bind(controller));
 
 router.get('/test', controller.onTest.bind(controller));
 

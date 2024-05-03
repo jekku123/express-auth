@@ -1,14 +1,15 @@
 import { injectable } from 'inversify';
 import { FilterQuery } from 'mongoose';
+import AppError from '../config/errors/AppError';
+import { STATUS_CODES } from '../config/errors/statusCodes';
 import User, { IUser } from '../models/user';
 import { IUserRepository } from '../types/IUserRepository';
 
 @injectable()
 export default class UserRepository implements IUserRepository {
   async create(email: string, password: string): Promise<IUser> {
-    const user = new User({ email, password });
-    const savedUser = await user.save();
-    return savedUser;
+    const user = User.create({ email, password });
+    return user;
   }
 
   async findOne(data: FilterQuery<IUser>): Promise<IUser | null> {
@@ -16,13 +17,24 @@ export default class UserRepository implements IUserRepository {
     return user;
   }
 
-  async update(id: string, data: Partial<IUser>): Promise<IUser | null> {
+  async update(id: string, data: Partial<IUser>): Promise<IUser> {
     const updatedUser = await User.findOneAndUpdate({ _id: id }, data);
+    if (!updatedUser) {
+      throw new AppError('User not updated', STATUS_CODES.INTERNAL_SERVER_ERROR);
+    }
     return updatedUser;
   }
 
-  async delete(id: string): Promise<IUser | null> {
+  async delete(id: string): Promise<IUser> {
     const deletedUser = await User.findOneAndDelete({ _id: id });
+    if (!deletedUser) {
+      throw new AppError('User not deleted', STATUS_CODES.INTERNAL_SERVER_ERROR);
+    }
     return deletedUser;
+  }
+
+  async save(user: IUser): Promise<IUser> {
+    const savedUser = await user.save();
+    return savedUser;
   }
 }

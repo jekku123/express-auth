@@ -6,8 +6,8 @@ import { ERROR_MESSAGES } from '../config/errors/errorMessages';
 import { STATUS_CODES } from '../config/errors/statusCodes';
 import { IAuthService } from '../types/IAuthService';
 
-import { IAccountService } from '../types/IAccountService';
 import { ILoggerService } from '../types/ILoggerService';
+import { IPasswordResetService } from '../types/IPasswordResetService';
 import { ISessionService } from '../types/ISessionService';
 import { ITokenService } from '../types/ITokenService';
 import { IUserService } from '../types/IUserService';
@@ -20,7 +20,7 @@ export class AuthService implements IAuthService {
   private loggerService: ILoggerService;
   private sessionService: ISessionService;
   private tokenService: ITokenService;
-  private accountService: IAccountService;
+  private passwordResetService: IPasswordResetService;
 
   constructor(
     @inject(INTERFACE_TYPE.UserService) userService: IUserService,
@@ -28,14 +28,14 @@ export class AuthService implements IAuthService {
     @inject(INTERFACE_TYPE.LoggerService) loggerService: ILoggerService,
     @inject(INTERFACE_TYPE.SessionService) sessionService: ISessionService,
     @inject(INTERFACE_TYPE.TokenService) tokenService: ITokenService,
-    @inject(INTERFACE_TYPE.AccountService) accountService: IAccountService
+    @inject(INTERFACE_TYPE.PasswordResetService) passwordResetService: IPasswordResetService
   ) {
     this.userService = userService;
     this.verificationService = verificationService;
     this.loggerService = loggerService;
     this.sessionService = sessionService;
     this.tokenService = tokenService;
-    this.accountService = accountService;
+    this.passwordResetService = passwordResetService;
   }
 
   async login(email: string, password: string) {
@@ -43,19 +43,7 @@ export class AuthService implements IAuthService {
       throw new AppError(ERROR_MESSAGES.MISSING_CREDENTIALS, STATUS_CODES.BAD_REQUEST);
     }
 
-    const user = await this.userService.getUserByEmail(email);
-
-    if (!user) {
-      throw new AppError(ERROR_MESSAGES.USER_NOT_FOUND, STATUS_CODES.NOT_FOUND, { email });
-    }
-
-    const isPasswordValid = await Bun.password.verify(password, user.password);
-
-    if (!isPasswordValid) {
-      throw new AppError(ERROR_MESSAGES.INVALID_CREDENTIALS, STATUS_CODES.UNAUTHORIZED, {
-        email,
-      });
-    }
+    const user = await this.userService.verifyCredentials(email, password);
 
     if (!user.emailVerified) {
       throw new AppError('Email not verified', STATUS_CODES.UNAUTHORIZED, {
@@ -63,24 +51,11 @@ export class AuthService implements IAuthService {
       });
     }
 
-    const userId = user._id;
-
-    const accessToken = this.tokenService.generateAccessToken();
-    const refreshToken = this.tokenService.generateRefreshToken();
-
-    await this.accountService.updateOrCreateAccount(userId, {
-      userId,
-      refreshToken: refreshToken.token,
-      accessToken: accessToken.token,
-      expiresAt: new Date(accessToken.expiresAt),
-      tokenType: 'Bearer ',
-    });
-
-    const session = await this.sessionService.createSession(userId);
+    const session = await this.sessionService.createSession(user._id);
 
     return {
       user: {
-        id: userId,
+        id: user._id,
         email: user.email,
       },
       sessionId: session.sessionId,
@@ -104,32 +79,26 @@ export class AuthService implements IAuthService {
       throw new AppError(ERROR_MESSAGES.BAD_REQUEST, STATUS_CODES.BAD_REQUEST);
     }
 
-    const existingToken = await this.verificationService.findTokenByToken(token);
-
-    if (!existingToken) {
-      throw new AppError('Verification token not found', STATUS_CODES.NOT_FOUND);
-    }
-
-    const hasExpired = existingToken.expiresAt < new Date(Date.now());
-
-    if (hasExpired) {
-      throw new AppError('Verification token expired', STATUS_CODES.UNAUTHORIZED);
-    }
-
-    const existingUser = await this.userService.getUserByEmail(existingToken.identifier);
+    const verification = await this.verificationService.useVerificationToken(token);
+    const existingUser = await this.userService.getUser({ email: verification.identifier });
 
     if (!existingUser) {
-      throw new AppError(ERROR_MESSAGES.USER_NOT_FOUND, STATUS_CODES.NOT_FOUND, {
-        email: existingToken.identifier,
-      });
+      throw new AppError(
+        'Verification token not used, email not found',
+        STATUS_CODES.INTERNAL_SERVER_ERROR
+      );
     }
 
     await this.userService.setEmailVerified(existingUser._id);
-    await this.verificationService.deleteToken(existingToken.token);
 
     this.loggerService.info(
-      `User with email ${existingUser.email} has verified an account`,
+      `User with email ${verification.identifier} has verified an account`,
       AuthService.name
     );
+  }
+
+  async resetPassword(token: string, password: string): Promise<void> {
+    const user = await this.passwordResetService.resetConfirm(token, password);
+    this.loggerService.info(`User with email ${user.email} has reset password`, AuthService.name);
   }
 }

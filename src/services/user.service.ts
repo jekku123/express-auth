@@ -17,18 +17,18 @@ import { IVerificationService } from '../types/IVerificationService';
 export class UserService implements IUserService {
   private loggerService: ILoggerService;
   private mailerService: IMailerService;
-  private tokenService: IVerificationService;
+  private verificationService: IVerificationService;
   private userRepository: IUserRepository;
 
   constructor(
     @inject(INTERFACE_TYPE.LoggerService) loggerService: ILoggerService,
     @inject(INTERFACE_TYPE.MailerService) mailerService: IMailerService,
-    @inject(INTERFACE_TYPE.VerificationService) tokenService: IVerificationService,
+    @inject(INTERFACE_TYPE.VerificationService) verificationService: IVerificationService,
     @inject(INTERFACE_TYPE.UserRepository) userRepository: IUserRepository
   ) {
     this.loggerService = loggerService;
     this.mailerService = mailerService;
-    this.tokenService = tokenService;
+    this.verificationService = verificationService;
     this.userRepository = userRepository;
   }
 
@@ -45,7 +45,7 @@ export class UserService implements IUserService {
 
     const user = await this.userRepository.create(email, password);
 
-    const { identifier, token } = await this.tokenService.generateVerificationToken(email);
+    const { identifier, token } = await this.verificationService.createVerificationToken(email);
     await this.mailerService.sendVerificationEmail(identifier, token);
 
     this.loggerService.info(`User with email ${email} registered`, UserService.name);
@@ -53,37 +53,17 @@ export class UserService implements IUserService {
     return user;
   }
 
-  async getUserProfile(id: string): Promise<IUser | null> {
-    const user = await this.userRepository.findOne({ _id: id });
-
-    if (!user) {
-      throw new AppError(ERROR_MESSAGES.USER_NOT_FOUND, STATUS_CODES.NOT_FOUND);
-    }
+  async getUser(data: Partial<IUser>): Promise<IUser | null> {
+    const user = await this.userRepository.findOne(data);
 
     return user;
   }
 
-  async getUserByEmail(email: string): Promise<IUser | null> {
-    const user = await this.userRepository.findOne({ email });
-
-    if (!user) {
-      throw new AppError(ERROR_MESSAGES.USER_NOT_FOUND, STATUS_CODES.NOT_FOUND);
-    }
-
-    return user;
-  }
-
-  async getUserById(id: string): Promise<IUser | null> {
-    const user = await this.userRepository.findOne({ _id: id });
-
-    if (!user) {
-      throw new AppError(ERROR_MESSAGES.USER_NOT_FOUND, STATUS_CODES.NOT_FOUND);
-    }
-
-    return user;
-  }
-
-  async updatePassword(userId: string, oldPassword: string, newPassword: string): Promise<IUser> {
+  async updatePassword(
+    userId: string,
+    oldPassword: string,
+    newPassword: string
+  ): Promise<IUser | null> {
     const user = await this.userRepository.findOne({ _id: userId });
 
     if (!user) {
@@ -96,15 +76,29 @@ export class UserService implements IUserService {
       throw new AppError(ERROR_MESSAGES.INVALID_CREDENTIALS, STATUS_CODES.UNAUTHORIZED);
     }
 
-    const updatedUser = await this.userRepository.update(userId, { password: newPassword });
+    user.password = newPassword;
 
-    if (!updatedUser) {
-      throw new AppError(ERROR_MESSAGES.USER_NOT_FOUND, STATUS_CODES.NOT_FOUND);
+    const savedUser = await this.userRepository.save(user);
+
+    if (!savedUser) {
+      throw new AppError(ERROR_MESSAGES.INTERNAL_SERVER_ERROR, STATUS_CODES.INTERNAL_SERVER_ERROR);
     }
 
     this.loggerService.info(`User with email ${user.email} updated password`, UserService.name);
 
-    return updatedUser;
+    return savedUser;
+  }
+
+  async resetPassword(userId: string, password: string): Promise<void> {
+    const user = await this.userRepository.findOne({ _id: userId });
+
+    if (!user) {
+      throw new AppError(ERROR_MESSAGES.USER_NOT_FOUND, STATUS_CODES.NOT_FOUND);
+    }
+
+    await this.userRepository.update(userId, { password });
+
+    this.loggerService.info(`User with email ${user.email} reseted password`, UserService.name);
   }
 
   async setEmailVerified(userId: string): Promise<IUser> {
@@ -115,6 +109,22 @@ export class UserService implements IUserService {
     }
 
     this.loggerService.info(`User with id ${userId} email verified`, UserService.name);
+
+    return user;
+  }
+
+  async verifyCredentials(email: string, password: string): Promise<IUser> {
+    const user = await this.userRepository.findOne({ email });
+
+    if (!user) {
+      throw new AppError(ERROR_MESSAGES.USER_NOT_FOUND, STATUS_CODES.NOT_FOUND);
+    }
+
+    const isPasswordValid = await Bun.password.verify(password, user.password);
+
+    if (!isPasswordValid) {
+      throw new AppError(ERROR_MESSAGES.INVALID_CREDENTIALS, STATUS_CODES.UNAUTHORIZED);
+    }
 
     return user;
   }

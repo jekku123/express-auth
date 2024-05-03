@@ -1,8 +1,7 @@
-import { IVerificationToken } from '../models/verificationToken';
+import { IVerificationToken } from '../models/verification-token';
 
 export interface IVerificationService {
-  generateVerificationToken(email: string): Promise<IVerificationToken>;
+  createVerificationToken(email: string): Promise<IVerificationToken>;
+  useVerificationToken(token: string): Promise<IVerificationToken>;
   deleteToken(token: string): Promise<IVerificationToken | null>;
-  findTokenByEmail(email: string): Promise<IVerificationToken | null>;
-  findTokenByToken(token: string): Promise<IVerificationToken | null>;
 }

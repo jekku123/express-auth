@@ -10,15 +10,15 @@ const services = {
   MailerService: Symbol.for('MailerService'),
   VerificationService: Symbol.for('VerificationService'),
   SessionService: Symbol.for('SessionService'),
-  AccountService: Symbol.for('AccountService'),
   TokenService: Symbol.for('TokenService'),
+  PasswordResetService: Symbol.for('PasswordService'),
 };
 
 const repositories = {
   UserRepository: Symbol.for('UserRepository'),
   SessionRepository: Symbol.for('SessionRepository'),
-  TokenRepository: Symbol.for('TokenRepository'),
-  AccountRepository: Symbol.for('AccountRepository'),
+  VerificationRepository: Symbol.for('VerificationRepository'),
+  PasswordResetRepository: Symbol.for('PasswordResetRepository'),
 };
 
 export const INTERFACE_TYPE = {

@@ -4,7 +4,9 @@ export type TokenPayload = {
 };
 
 export interface ITokenService {
-  generateAccessToken(): TokenPayload;
-  generateRefreshToken(): TokenPayload;
-  verifyToken(token: string): TokenPayload;
+  generateAccessToken(payload: any): string;
+  generateRefreshToken(payload: any): string;
+  generateTokens(payload: any): { accessToken: string; refreshToken: string };
+  verifyRefreshToken(token: string): any;
+  generateSessionId(): TokenPayload;
 }

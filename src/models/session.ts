@@ -1,5 +1,4 @@
 import mongoose, { Document, Model, Schema } from 'mongoose';
-import { generateRandomString } from '../utils';
 
 export const SESSION_ID_EXPIRES = 2 * 60 * 1000;
 export const SESSION_EXPIRATION_THRESHOLD = 1 * 60 * 1000;
@@ -18,7 +17,6 @@ type SessionModel = Model<ISession, {}, ISessionMethods> & ISessionStatics;
 const sessionSchema = new Schema<ISession, SessionModel, ISessionMethods>({
   sessionId: {
     type: String,
-    default: () => generateRandomString(),
   },
   expiresAt: {
     type: Date,
