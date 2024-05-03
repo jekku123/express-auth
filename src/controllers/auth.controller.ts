@@ -110,16 +110,16 @@ export class AuthController implements IAuthController {
    * @route POST /api/auth/forgot-password
    */
 
-  // async onForgotPassword(req: Request, res: Response, next: NextFunction) {
-  //   const { email } = req.body;
+  async onForgotPassword(req: Request, res: Response, next: NextFunction) {
+    const { email } = req.body;
 
-  //   try {
-  //     await this.authService.forgotPassword(email);
-  //     res.status(STATUS_CODES.OK).send({ message: 'Password reset link sent to email' });
-  //   } catch (error) {
-  //     next(error);
-  //   }
-  // }
+    try {
+      await this.authService.forgotPassword(email);
+      res.status(STATUS_CODES.OK).send({ message: 'Password reset link sent to email' });
+    } catch (error) {
+      next(error);
+    }
+  }
 
   /**
    * @route POST /api/auth/reset-password

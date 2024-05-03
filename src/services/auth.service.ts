@@ -9,7 +9,6 @@ import { IAuthService } from '../types/IAuthService';
 import { ILoggerService } from '../types/ILoggerService';
 import { IPasswordResetService } from '../types/IPasswordResetService';
 import { ISessionService } from '../types/ISessionService';
-import { ITokenService } from '../types/ITokenService';
 import { IUserService } from '../types/IUserService';
 import { IVerificationService } from '../types/IVerificationService';
 
@@ -19,7 +18,6 @@ export class AuthService implements IAuthService {
   private verificationService: IVerificationService;
   private loggerService: ILoggerService;
   private sessionService: ISessionService;
-  private tokenService: ITokenService;
   private passwordResetService: IPasswordResetService;
 
   constructor(
@@ -27,14 +25,12 @@ export class AuthService implements IAuthService {
     @inject(INTERFACE_TYPE.VerificationService) verificationService: IVerificationService,
     @inject(INTERFACE_TYPE.LoggerService) loggerService: ILoggerService,
     @inject(INTERFACE_TYPE.SessionService) sessionService: ISessionService,
-    @inject(INTERFACE_TYPE.TokenService) tokenService: ITokenService,
     @inject(INTERFACE_TYPE.PasswordResetService) passwordResetService: IPasswordResetService
   ) {
     this.userService = userService;
     this.verificationService = verificationService;
     this.loggerService = loggerService;
     this.sessionService = sessionService;
-    this.tokenService = tokenService;
     this.passwordResetService = passwordResetService;
   }
 
@@ -78,7 +74,6 @@ export class AuthService implements IAuthService {
     if (!token) {
       throw new AppError(ERROR_MESSAGES.BAD_REQUEST, STATUS_CODES.BAD_REQUEST);
     }
-
     const verification = await this.verificationService.useVerificationToken(token);
     const existingUser = await this.userService.getUser({ email: verification.identifier });
 
@@ -97,8 +92,21 @@ export class AuthService implements IAuthService {
     );
   }
 
+  async forgotPassword(email: string): Promise<void> {
+    if (!email) {
+      throw new AppError(ERROR_MESSAGES.BAD_REQUEST, STATUS_CODES.BAD_REQUEST);
+    }
+
+    this.passwordResetService.reset(email);
+  }
+
   async resetPassword(token: string, password: string): Promise<void> {
+    if (!token || !password) {
+      throw new AppError(ERROR_MESSAGES.BAD_REQUEST, STATUS_CODES.BAD_REQUEST);
+    }
+
     const user = await this.passwordResetService.resetConfirm(token, password);
+
     this.loggerService.info(`User with email ${user.email} has reset password`, AuthService.name);
   }
 }

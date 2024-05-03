@@ -46,6 +46,7 @@ export default class PasswordResetService implements IPasswordResetService {
     if (!user) {
       throw new AppError(ERROR_MESSAGES.USER_NOT_FOUND, STATUS_CODES.NOT_FOUND);
     }
+
     const resetToken = await this.passwordResetRepository.create(user.email);
     await this.mailerService.sendPasswordResetEmail(user.email, resetToken.token);
 

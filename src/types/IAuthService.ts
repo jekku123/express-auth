@@ -11,4 +11,5 @@ export interface IAuthService {
   logout(sessionId: string): Promise<any>;
   verifyEmail(token: string): Promise<void>;
   resetPassword(token: string, password: string): Promise<void>;
+  forgotPassword(email: string): Promise<void>;
 }
