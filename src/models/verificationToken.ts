@@ -1,8 +1,7 @@
-import mongoose, { HydratedDocument, Model, Schema } from 'mongoose';
+import mongoose, { Document, HydratedDocument, Model, Schema } from 'mongoose';
 import { generateRandomString } from '../utils';
 
-export interface IVerificationToken {
-  _id: string;
+export interface IVerificationToken extends Document {
   token: string;
   identifier: string;
   expiresAt: Date;

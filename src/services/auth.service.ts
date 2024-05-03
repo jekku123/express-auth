@@ -6,28 +6,36 @@ import { ERROR_MESSAGES } from '../config/errors/errorMessages';
 import { STATUS_CODES } from '../config/errors/statusCodes';
 import { IAuthService } from '../types/IAuthService';
 
+import { IAccountService } from '../types/IAccountService';
 import { ILoggerService } from '../types/ILoggerService';
 import { ISessionService } from '../types/ISessionService';
 import { ITokenService } from '../types/ITokenService';
 import { IUserService } from '../types/IUserService';
+import { IVerificationService } from '../types/IVerificationService';
 
 @injectable()
 export class AuthService implements IAuthService {
   private userService: IUserService;
-  private tokenService: ITokenService;
+  private verificationService: IVerificationService;
   private loggerService: ILoggerService;
   private sessionService: ISessionService;
+  private tokenService: ITokenService;
+  private accountService: IAccountService;
 
   constructor(
     @inject(INTERFACE_TYPE.UserService) userService: IUserService,
-    @inject(INTERFACE_TYPE.TokenService) tokenService: ITokenService,
+    @inject(INTERFACE_TYPE.VerificationService) verificationService: IVerificationService,
     @inject(INTERFACE_TYPE.LoggerService) loggerService: ILoggerService,
-    @inject(INTERFACE_TYPE.SessionService) sessionService: ISessionService
+    @inject(INTERFACE_TYPE.SessionService) sessionService: ISessionService,
+    @inject(INTERFACE_TYPE.TokenService) tokenService: ITokenService,
+    @inject(INTERFACE_TYPE.AccountService) accountService: IAccountService
   ) {
     this.userService = userService;
-    this.tokenService = tokenService;
+    this.verificationService = verificationService;
     this.loggerService = loggerService;
     this.sessionService = sessionService;
+    this.tokenService = tokenService;
+    this.accountService = accountService;
   }
 
   async login(email: string, password: string) {
@@ -55,11 +63,24 @@ export class AuthService implements IAuthService {
       });
     }
 
-    const session = await this.sessionService.createSession(user._id);
+    const userId = user._id;
+
+    const accessToken = this.tokenService.generateAccessToken();
+    const refreshToken = this.tokenService.generateRefreshToken();
+
+    await this.accountService.updateOrCreateAccount(userId, {
+      userId,
+      refreshToken: refreshToken.token,
+      accessToken: accessToken.token,
+      expiresAt: new Date(accessToken.expiresAt),
+      tokenType: 'Bearer ',
+    });
+
+    const session = await this.sessionService.createSession(userId);
 
     return {
       user: {
-        id: user._id,
+        id: userId,
         email: user.email,
       },
       sessionId: session.sessionId,
@@ -83,7 +104,7 @@ export class AuthService implements IAuthService {
       throw new AppError(ERROR_MESSAGES.BAD_REQUEST, STATUS_CODES.BAD_REQUEST);
     }
 
-    const existingToken = await this.tokenService.findTokenByToken(token);
+    const existingToken = await this.verificationService.findTokenByToken(token);
 
     if (!existingToken) {
       throw new AppError('Verification token not found', STATUS_CODES.NOT_FOUND);
@@ -104,7 +125,7 @@ export class AuthService implements IAuthService {
     }
 
     await this.userService.setEmailVerified(existingUser._id);
-    await this.tokenService.deleteToken(existingToken.token);
+    await this.verificationService.deleteToken(existingToken.token);
 
     this.loggerService.info(
       `User with email ${existingUser.email} has verified an account`,

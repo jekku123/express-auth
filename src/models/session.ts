@@ -1,11 +1,10 @@
-import mongoose, { Model, Schema } from 'mongoose';
+import mongoose, { Document, Model, Schema } from 'mongoose';
 import { generateRandomString } from '../utils';
 
 export const SESSION_ID_EXPIRES = 2 * 60 * 1000;
 export const SESSION_EXPIRATION_THRESHOLD = 1 * 60 * 1000;
 
-export interface ISession {
-  _id: string;
+export interface ISession extends Document {
   sessionId: string;
   userId: Schema.Types.ObjectId;
   expiresAt: Date;
@@ -23,8 +22,6 @@ const sessionSchema = new Schema<ISession, SessionModel, ISessionMethods>({
   },
   expiresAt: {
     type: Date,
-    expires: SESSION_ID_EXPIRES / 1000,
-    default: () => Date.now() + SESSION_ID_EXPIRES,
   },
   userId: {
     type: Schema.Types.ObjectId,

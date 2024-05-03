@@ -1,8 +1,10 @@
-import { IVerificationToken } from '../models/verificationToken';
+export type TokenPayload = {
+  token: any;
+  expiresAt: string | Date;
+};
 
 export interface ITokenService {
-  generateVerificationToken(email: string): Promise<IVerificationToken>;
-  deleteToken(token: string): Promise<IVerificationToken | null>;
-  findTokenByEmail(email: string): Promise<IVerificationToken | null>;
-  findTokenByToken(token: string): Promise<IVerificationToken | null>;
+  generateAccessToken(): TokenPayload;
+  generateRefreshToken(): TokenPayload;
+  verifyToken(token: string): TokenPayload;
 }

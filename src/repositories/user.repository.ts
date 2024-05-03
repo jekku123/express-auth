@@ -1,4 +1,5 @@
 import { injectable } from 'inversify';
+import { FilterQuery } from 'mongoose';
 import User, { IUser } from '../models/user';
 import { IUserRepository } from '../types/IUserRepository';
 
@@ -10,7 +11,7 @@ export default class UserRepository implements IUserRepository {
     return savedUser;
   }
 
-  async findOne(data: Partial<IUser>): Promise<IUser | null> {
+  async findOne(data: FilterQuery<IUser>): Promise<IUser | null> {
     const user = await User.findOne(data);
     return user;
   }

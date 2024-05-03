@@ -9,31 +9,27 @@ import { IUser } from '../models/user';
 
 import { ILoggerService } from '../types/ILoggerService';
 import { IMailerService } from '../types/IMailerService';
-import { ITokenService } from '../types/ITokenService';
-import { IUserEntity } from '../types/IUserEntity';
 import { IUserRepository } from '../types/IUserRepository';
 import { IUserService } from '../types/IUserService';
+import { IVerificationService } from '../types/IVerificationService';
 
 @injectable()
 export class UserService implements IUserService {
   private loggerService: ILoggerService;
   private mailerService: IMailerService;
-  private tokenService: ITokenService;
+  private tokenService: IVerificationService;
   private userRepository: IUserRepository;
-  private userEntity: IUserEntity;
 
   constructor(
     @inject(INTERFACE_TYPE.LoggerService) loggerService: ILoggerService,
     @inject(INTERFACE_TYPE.MailerService) mailerService: IMailerService,
-    @inject(INTERFACE_TYPE.TokenService) tokenService: ITokenService,
-    @inject(INTERFACE_TYPE.UserRepository) userRepository: IUserRepository,
-    @inject(INTERFACE_TYPE.UserEntity) userEntity: IUserEntity
+    @inject(INTERFACE_TYPE.VerificationService) tokenService: IVerificationService,
+    @inject(INTERFACE_TYPE.UserRepository) userRepository: IUserRepository
   ) {
     this.loggerService = loggerService;
     this.mailerService = mailerService;
     this.tokenService = tokenService;
     this.userRepository = userRepository;
-    this.userEntity = userEntity;
   }
 
   async createUser(email: string, password: string): Promise<IUser> {
@@ -48,8 +44,8 @@ export class UserService implements IUserService {
     }
 
     const user = await this.userRepository.create(email, password);
-    const { identifier, token } = await this.tokenService.generateVerificationToken(email);
 
+    const { identifier, token } = await this.tokenService.generateVerificationToken(email);
     await this.mailerService.sendVerificationEmail(identifier, token);
 
     this.loggerService.info(`User with email ${email} registered`, UserService.name);

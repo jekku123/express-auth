@@ -1,7 +1,6 @@
-import mongoose, { HydratedDocument, Model, Schema } from 'mongoose';
+import mongoose, { Document, HydratedDocument, Model, Schema } from 'mongoose';
 
-export interface IUser {
-  _id: string;
+export interface IUser extends Document {
   name?: string;
   email: string;
   image?: string;
