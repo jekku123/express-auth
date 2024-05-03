@@ -3,10 +3,10 @@ import { FilterQuery } from 'mongoose';
 import AppError from '../config/errors/AppError';
 import { STATUS_CODES } from '../config/errors/statusCodes';
 import VerificationToken, { IVerificationToken } from '../models/verification-token';
-import { IVerificationRepository } from '../types/IVerificationRepository';
+import { IEmailEmailVerificationRepository } from '../types/IEmailVerificationRepository';
 
 @injectable()
-export default class VerificationRepository implements IVerificationRepository {
+export default class EmailVerificationRepository implements IEmailEmailVerificationRepository {
   async create(identifier: string): Promise<IVerificationToken> {
     const token = VerificationToken.create({ identifier });
     return token;

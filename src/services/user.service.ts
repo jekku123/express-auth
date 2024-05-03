@@ -7,32 +7,37 @@ import { STATUS_CODES } from '../config/errors/statusCodes';
 import AppError from '../config/errors/AppError';
 import { IUser } from '../models/user';
 
+import { IEmailVerificationService } from '../types/IEmailVerificationService';
 import { ILoggerService } from '../types/ILoggerService';
 import { IMailerService } from '../types/IMailerService';
+import { IPasswordResetService } from '../types/IPasswordResetService';
 import { IUserRepository } from '../types/IUserRepository';
 import { IUserService } from '../types/IUserService';
-import { IVerificationService } from '../types/IVerificationService';
 
 @injectable()
 export class UserService implements IUserService {
   private loggerService: ILoggerService;
   private mailerService: IMailerService;
-  private verificationService: IVerificationService;
+  private emailVerificationService: IEmailVerificationService;
   private userRepository: IUserRepository;
+  private passwordResetService: IPasswordResetService;
 
   constructor(
     @inject(INTERFACE_TYPE.LoggerService) loggerService: ILoggerService,
     @inject(INTERFACE_TYPE.MailerService) mailerService: IMailerService,
-    @inject(INTERFACE_TYPE.VerificationService) verificationService: IVerificationService,
-    @inject(INTERFACE_TYPE.UserRepository) userRepository: IUserRepository
+    @inject(INTERFACE_TYPE.EmailVerificationService)
+    emailVerificationService: IEmailVerificationService,
+    @inject(INTERFACE_TYPE.UserRepository) userRepository: IUserRepository,
+    @inject(INTERFACE_TYPE.PasswordResetService) passwordResetService: IPasswordResetService
   ) {
     this.loggerService = loggerService;
     this.mailerService = mailerService;
-    this.verificationService = verificationService;
+    this.emailVerificationService = emailVerificationService;
     this.userRepository = userRepository;
+    this.passwordResetService = passwordResetService;
   }
 
-  async createUser(email: string, password: string): Promise<IUser> {
+  async register(email: string, password: string): Promise<IUser> {
     if (!email || !password) {
       throw new AppError(ERROR_MESSAGES.MISSING_CREDENTIALS, STATUS_CODES.BAD_REQUEST);
     }
@@ -45,7 +50,10 @@ export class UserService implements IUserService {
 
     const user = await this.userRepository.create(email, password);
 
-    const { identifier, token } = await this.verificationService.createVerificationToken(email);
+    const { identifier, token } = await this.emailVerificationService.createVerificationToken(
+      email
+    );
+
     await this.mailerService.sendVerificationEmail(identifier, token);
 
     this.loggerService.info(`User with email ${email} registered`, UserService.name);
@@ -55,7 +63,6 @@ export class UserService implements IUserService {
 
   async getUser(data: Partial<IUser>): Promise<IUser | null> {
     const user = await this.userRepository.findOne(data);
-
     return user;
   }
 
@@ -64,19 +71,18 @@ export class UserService implements IUserService {
     oldPassword: string,
     newPassword: string
   ): Promise<IUser | null> {
+    if (!userId || !oldPassword || !newPassword) {
+      throw new AppError(ERROR_MESSAGES.MISSING_CREDENTIALS, STATUS_CODES.BAD_REQUEST);
+    }
+
     const user = await this.userRepository.findOne({ _id: userId });
 
     if (!user) {
       throw new AppError(ERROR_MESSAGES.USER_NOT_FOUND, STATUS_CODES.NOT_FOUND);
     }
 
-    const isPasswordValid = await Bun.password.verify(oldPassword, user.password);
-
-    if (!isPasswordValid) {
-      throw new AppError(ERROR_MESSAGES.INVALID_CREDENTIALS, STATUS_CODES.UNAUTHORIZED);
-    }
-
-    user.password = newPassword;
+    const user2 = await this.verifyCredentials(user.email, oldPassword);
+    user.password = await this.hashPassword(newPassword);
 
     const savedUser = await this.userRepository.save(user);
 
@@ -89,16 +95,25 @@ export class UserService implements IUserService {
     return savedUser;
   }
 
-  async resetPassword(userId: string, password: string): Promise<void> {
-    const user = await this.userRepository.findOne({ _id: userId });
+  async resetPassword(token: string, password: string): Promise<IUser> {
+    if (!token || !password) {
+      throw new AppError(ERROR_MESSAGES.MISSING_CREDENTIALS, STATUS_CODES.BAD_REQUEST);
+    }
+
+    const identifier = await this.passwordResetService.verifyPasswordResetToken(token, password);
+    const user = await this.getUser({ email: identifier });
 
     if (!user) {
       throw new AppError(ERROR_MESSAGES.USER_NOT_FOUND, STATUS_CODES.NOT_FOUND);
     }
 
-    await this.userRepository.update(userId, { password });
+    user.password = await this.hashPassword(password);
+
+    await this.userRepository.save(user);
 
     this.loggerService.info(`User with email ${user.email} reseted password`, UserService.name);
+
+    return user;
   }
 
   async setEmailVerified(userId: string): Promise<IUser> {
@@ -127,5 +142,17 @@ export class UserService implements IUserService {
     }
 
     return user;
+  }
+
+  async forgotPassword(email: string): Promise<void> {
+    if (!email) {
+      throw new AppError(ERROR_MESSAGES.BAD_REQUEST, STATUS_CODES.BAD_REQUEST);
+    }
+
+    this.passwordResetService.reset(email);
+  }
+
+  async hashPassword(password: string): Promise<string> {
+    return await Bun.password.hash(password);
   }
 }

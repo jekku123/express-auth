@@ -1,10 +1,12 @@
 import { injectable } from 'inversify';
 import { IMailerService } from '../types/IMailerService';
 
+const BASE_URL = Bun.env.BASE_URL;
+
 @injectable()
 export default class MailerService implements IMailerService {
   async sendVerificationEmail(to: string, token: string): Promise<void> {
-    const confirmLink = `http://localhost:3000/api/auth/verify-email?token=${token}`;
+    const confirmLink = `${BASE_URL}/api/auth/verify-email?token=${token}`;
     console.log(
       'SendVerificationEmail',
       JSON.stringify(
@@ -21,7 +23,7 @@ export default class MailerService implements IMailerService {
   }
 
   async sendPasswordResetEmail(to: string, token: string): Promise<void> {
-    const resetLink = `http://localhost:3000/api/auth/reset-password?token=${token}`;
+    const resetLink = `${BASE_URL}/api/auth/reset-password?token=${token}`;
     console.log(
       'SendPasswordResetEmail',
       JSON.stringify(

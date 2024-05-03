@@ -3,8 +3,6 @@ import { inject, injectable } from 'inversify';
 import { INTERFACE_TYPE } from '../config/dependencies';
 
 import { cookieSettings } from '../config/cookieSettings';
-import AppError from '../config/errors/AppError';
-import { ERROR_MESSAGES } from '../config/errors/errorMessages';
 import { STATUS_CODES } from '../config/errors/statusCodes';
 import Session from '../models/session';
 import User from '../models/user';
@@ -101,40 +99,6 @@ export class AuthController implements IAuthController {
     try {
       await this.authService.verifyEmail(query.token as string);
       res.status(STATUS_CODES.OK).send('Email verified');
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  /**
-   * @route POST /api/auth/forgot-password
-   */
-
-  async onForgotPassword(req: Request, res: Response, next: NextFunction) {
-    const { email } = req.body;
-
-    try {
-      await this.authService.forgotPassword(email);
-      res.status(STATUS_CODES.OK).send({ message: 'Password reset link sent to email' });
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  /**
-   * @route POST /api/auth/reset-password
-   */
-  async onResetPassword(req: Request, res: Response, next: NextFunction) {
-    const query = req.query;
-    const { password } = req.body;
-
-    if (!query?.token) {
-      throw new AppError(ERROR_MESSAGES.MISSING_TOKEN, STATUS_CODES.BAD_REQUEST);
-    }
-
-    try {
-      await this.authService.resetPassword(query.token as string, password);
-      res.status(STATUS_CODES.OK).send({ message: 'Password reset successful' });
     } catch (error) {
       next(error);
     }

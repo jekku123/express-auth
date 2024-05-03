@@ -53,7 +53,7 @@ export default class PasswordResetService implements IPasswordResetService {
     return user;
   }
 
-  async resetConfirm(token: string, password: string): Promise<IUser> {
+  async verifyPasswordResetToken(token: string, password: string): Promise<IUser['email']> {
     if (!token || !password) {
       throw new AppError(ERROR_MESSAGES.BAD_REQUEST, STATUS_CODES.BAD_REQUEST);
     }
@@ -70,20 +70,8 @@ export default class PasswordResetService implements IPasswordResetService {
       throw new AppError(ERROR_MESSAGES.TOKEN_EXPIRED, STATUS_CODES.UNAUTHORIZED);
     }
 
-    const user = await this.userService.getUser({ email: passwordResetToken.identifier });
-
-    if (!user) {
-      throw new AppError(ERROR_MESSAGES.USER_NOT_FOUND, STATUS_CODES.NOT_FOUND);
-    }
-
-    const updatedUser = await this.userService.updatePassword(user.email, user.password, password);
-
-    if (!updatedUser) {
-      throw new AppError(ERROR_MESSAGES.INTERNAL_SERVER_ERROR, STATUS_CODES.INTERNAL_SERVER_ERROR);
-    }
-
     await this.passwordResetRepository.delete(token);
 
-    return updatedUser;
+    return passwordResetToken.identifier;
   }
 }

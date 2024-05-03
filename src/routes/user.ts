@@ -13,7 +13,7 @@ router.post('/register', controller.onRegister.bind(controller));
 
 router.use(validateSession);
 
-router.get('/', controller.onGetUserProfile.bind(controller));
+router.get('/', controller.onGetUser.bind(controller));
 router.put('/', controller.onUpdatePassword.bind(controller));
 
 export default router;

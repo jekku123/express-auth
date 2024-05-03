@@ -41,13 +41,6 @@ const userSchema = new Schema<IUser, UserModel, IUserMethods>({
   },
 });
 
-userSchema.pre('save', async function (next) {
-  if (this.isModified('password')) {
-    this.password = await Bun.password.hash(this.password);
-  }
-  next();
-});
-
 userSchema.method('updatePassword', async function (password: string) {
   this.password = password;
   return this.save();

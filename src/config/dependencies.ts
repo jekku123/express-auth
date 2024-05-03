@@ -8,16 +8,15 @@ const services = {
   UserService: Symbol.for('UserService'),
   LoggerService: Symbol.for('LoggerService'),
   MailerService: Symbol.for('MailerService'),
-  VerificationService: Symbol.for('VerificationService'),
+  EmailVerificationService: Symbol.for('EmailVerificationService'),
   SessionService: Symbol.for('SessionService'),
-  TokenService: Symbol.for('TokenService'),
   PasswordResetService: Symbol.for('PasswordService'),
 };
 
 const repositories = {
   UserRepository: Symbol.for('UserRepository'),
   SessionRepository: Symbol.for('SessionRepository'),
-  VerificationRepository: Symbol.for('VerificationRepository'),
+  EmailVerificationRepository: Symbol.for('EmailVerificationRepository'),
   PasswordResetRepository: Symbol.for('PasswordResetRepository'),
 };
 

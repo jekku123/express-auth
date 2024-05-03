@@ -1,30 +1,22 @@
+import crypto from 'crypto';
 import { inject, injectable } from 'inversify';
 import { INTERFACE_TYPE } from '../config/dependencies';
 import { ISession } from '../models/session';
 import { ISessionRepository } from '../types/ISessionRepository';
 import { ISessionService } from '../types/ISessionService';
-import { ITokenService } from '../types/ITokenService';
+
+export const SESSION_TOKEN_DURATION = 10 * 60 * 1000;
 
 @injectable()
 export class SessionService implements ISessionService {
   private sessionRepository: ISessionRepository;
-  private tokenService: ITokenService;
 
-  constructor(
-    @inject(INTERFACE_TYPE.SessionRepository) sessionRepository: ISessionRepository,
-    @inject(INTERFACE_TYPE.TokenService) tokenService: ITokenService
-  ) {
+  constructor(@inject(INTERFACE_TYPE.SessionRepository) sessionRepository: ISessionRepository) {
     this.sessionRepository = sessionRepository;
-    this.tokenService = tokenService;
   }
 
-  /**
-   * @description Create a new session in the database
-   * @usage `await sessionService.createSession({ userId, sessionId?, expiresAt})`
-   * you can override the default sessionId and expiresAt by passing them in the data object
-   */
   async createSession(userId: ISession['userId']): Promise<ISession> {
-    const { token, expiresAt } = this.tokenService.generateSessionId();
+    const { token, expiresAt } = this.generateSessionId();
 
     const session = await this.sessionRepository.create({
       sessionId: token,
@@ -42,6 +34,16 @@ export class SessionService implements ISessionService {
   async getSessionById(sessionId: string): Promise<ISession | null> {
     const session = await this.sessionRepository.find(sessionId);
     return session;
+  }
+
+  generateSessionId(): { token: string; expiresAt: string } {
+    const sessionId = crypto.randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + SESSION_TOKEN_DURATION).toISOString();
+
+    return {
+      token: sessionId,
+      expiresAt: expiresAt,
+    };
   }
 
   async deleteSession(sessionId: string): Promise<ISession> {
