@@ -10,7 +10,6 @@ const controller = container.get<AuthController>(INTERFACE_TYPE.AuthController);
 router.post('/login', controller.onLogin.bind(controller));
 router.post('/logout', controller.onLogout.bind(controller));
 
-router.post('/verify-email', controller.onVerifyEmail.bind(controller));
 router.get('/test', controller.onTest.bind(controller));
 
 export default router;

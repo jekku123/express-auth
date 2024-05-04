@@ -81,8 +81,13 @@ export class UserService implements IUserService {
       throw new AppError(ERROR_MESSAGES.USER_NOT_FOUND, STATUS_CODES.NOT_FOUND);
     }
 
-    const user2 = await this.verifyCredentials(user.email, oldPassword);
-    user.password = await this.hashPassword(newPassword);
+    const isPasswordValid = await Bun.password.verify(oldPassword, user.password);
+
+    if (!isPasswordValid) {
+      throw new AppError(ERROR_MESSAGES.INVALID_CREDENTIALS, STATUS_CODES.UNAUTHORIZED);
+    }
+
+    user.password = await Bun.password.hash(newPassword);
 
     const savedUser = await this.userRepository.save(user);
 
@@ -107,7 +112,7 @@ export class UserService implements IUserService {
       throw new AppError(ERROR_MESSAGES.USER_NOT_FOUND, STATUS_CODES.NOT_FOUND);
     }
 
-    user.password = await this.hashPassword(password);
+    user.password = await Bun.password.hash(password);
 
     await this.userRepository.save(user);
 
@@ -128,20 +133,31 @@ export class UserService implements IUserService {
     return user;
   }
 
-  async verifyCredentials(email: string, password: string): Promise<IUser> {
-    const user = await this.userRepository.findOne({ email });
-
-    if (!user) {
-      throw new AppError(ERROR_MESSAGES.USER_NOT_FOUND, STATUS_CODES.NOT_FOUND);
-    }
-
-    const isPasswordValid = await Bun.password.verify(password, user.password);
-
-    if (!isPasswordValid) {
+  async verifyPassword(password: string, hashedPassword: string): Promise<boolean> {
+    const isValid = await Bun.password.verify(password, hashedPassword);
+    if (!isValid) {
       throw new AppError(ERROR_MESSAGES.INVALID_CREDENTIALS, STATUS_CODES.UNAUTHORIZED);
     }
+    return isValid;
+  }
 
-    return user;
+  async verifyEmail(token: string): Promise<IUser> {
+    if (!token) {
+      throw new AppError(ERROR_MESSAGES.BAD_REQUEST, STATUS_CODES.BAD_REQUEST);
+    }
+
+    const verification = await this.emailVerificationService.useVerificationToken(token);
+    const existingUser = await this.getUser({ email: verification.identifier });
+
+    if (!existingUser) {
+      throw new AppError(ERROR_MESSAGES.USER_NOT_FOUND, STATUS_CODES.INTERNAL_SERVER_ERROR, {
+        email: verification.identifier,
+      });
+    }
+
+    await this.setEmailVerified(existingUser._id);
+
+    return existingUser;
   }
 
   async forgotPassword(email: string): Promise<void> {
@@ -150,9 +166,5 @@ export class UserService implements IUserService {
     }
 
     this.passwordResetService.reset(email);
-  }
-
-  async hashPassword(password: string): Promise<string> {
-    return await Bun.password.hash(password);
   }
 }

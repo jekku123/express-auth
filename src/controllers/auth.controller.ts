@@ -14,7 +14,9 @@ import { IAuthService } from '../types/IAuthService';
  * @route /api/auth
  * @desc Controller for authentication routes
  * @access Public
- * @param {IAuthService} authService - Service for authentication
+ * @param {IAuthService} authService - Service for authentication operations
+ * @POST /api/auth/login
+ * @POST /api/auth/logout
  */
 @injectable()
 export class AuthController implements IAuthController {
@@ -42,7 +44,7 @@ export class AuthController implements IAuthController {
   }
 
   /**
-   * @route GET /api/auth/logout
+   * @route POST /api/auth/logout
    * @desc Logout
    * @access Public
    */
@@ -63,49 +65,7 @@ export class AuthController implements IAuthController {
   }
 
   /**
-   * @route GET /api/auth/refresh
-   * @desc Refresh access token
-   * @access Public
-   */
-  async onRefreshToken(req: Request, res: Response, next: NextFunction) {
-    const cookies = req.cookies.refreshToken;
-    console.log({ refreshToken: cookies });
-    res.status(STATUS_CODES.OK).send({ cookies });
-
-    // try {
-    //   const refreshToken = cookies?.refreshToken;
-    //   if (!refreshToken) {
-    //     throw new AppError(ERROR_MESSAGES.MISSING_TOKEN, STATUS_CODES.BAD_REQUEST);
-    //   }
-    //   const accessToken = await this.authService.refreshToken(refreshToken);
-    //   res.status(STATUS_CODES.OK).send({ accessToken });
-    // } catch (error) {
-    //   next(error);
-    // }
-  }
-
-  /**
-   * @route GET /api/auth/verify-email
-   * @desc Verify email
-   * @access Public
-   */
-  async onVerifyEmail(req: Request, res: Response, next: NextFunction) {
-    const query = req.query;
-
-    if (!query?.token) {
-      return res.sendStatus(STATUS_CODES.NO_CONTENT);
-    }
-
-    try {
-      await this.authService.verifyEmail(query.token as string);
-      res.status(STATUS_CODES.OK).send('Email verified');
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  /**
-   * @route POST /api/auth/test
+   * @route GET /api/auth/test
    */
   async onTest(_req: Request, res: Response, next: NextFunction) {
     try {

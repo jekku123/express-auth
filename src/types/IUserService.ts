@@ -5,7 +5,7 @@ export interface IUserService {
   updatePassword(userId: string, oldPassword: string, newPassword: string): Promise<IUser | null>;
   getUser(data: Partial<IUser>): Promise<IUser | null>;
   setEmailVerified(userId: string): Promise<IUser | null>;
-  verifyCredentials(email: string, password: string): Promise<IUser>;
+  verifyEmail(email: string): Promise<IUser>;
   resetPassword(userId: string, password: string): Promise<IUser>;
   forgotPassword(email: string): Promise<void>;
 }

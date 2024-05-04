@@ -38,6 +38,26 @@ export class UserController implements IUserController {
   }
 
   /**
+   * @route POST /api/user/verify-email
+   * @desc Verify email
+   * @access Public
+   */
+  async onVerifyEmail(req: Request, res: Response, next: NextFunction) {
+    const query = req.query;
+
+    if (!query?.token) {
+      return res.sendStatus(STATUS_CODES.NO_CONTENT);
+    }
+
+    try {
+      await this.userService.verifyEmail(query.token as string);
+      res.status(STATUS_CODES.OK).send('Email verified');
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
    * @desc For testing purposes
    */
   async onGetUser(req: Request, res: Response, next: NextFunction) {
