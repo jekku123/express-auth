@@ -14,6 +14,8 @@ router.post('/register', controller.onRegister.bind(controller));
 
 router.get('/', controller.onGetUser.bind(controller));
 router.put('/update-password', controller.onUpdatePassword.bind(controller));
+router.post('/forgot-password', controller.onForgotPassword.bind(controller));
 router.post('/verify-email', controller.onVerifyEmail.bind(controller));
+router.post('/reset-password', controller.onResetPassword.bind(controller));
 
 export default router;

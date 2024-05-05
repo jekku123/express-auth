@@ -3,7 +3,6 @@ export type LoginServiceResponse = {
     id: string;
     email: string;
   };
-  sessionId: string;
 };
 
 export interface IAuthService {

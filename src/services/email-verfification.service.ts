@@ -10,55 +10,70 @@ import { IEmailVerificationService } from '../types/IEmailVerificationService';
 
 @injectable()
 export default class EmailVerificationService implements IEmailVerificationService {
-  private emailVerificationRepository: IEmailVerificationRepository;
-
   constructor(
     @inject(INTERFACE_TYPE.EmailVerificationRepository)
-    emailVerificationRepository: IEmailVerificationRepository
-  ) {
-    this.emailVerificationRepository = emailVerificationRepository;
-  }
-  async createVerificationToken(email: string): Promise<IVerificationToken> {
-    const existingToken = await this.emailVerificationRepository.find({ identifier: email });
+    private emailVerificationRepository: IEmailVerificationRepository
+  ) {}
 
+  async createVerificationToken(email: string): Promise<IVerificationToken> {
+    try {
+      await this.deleteExistingToken(email);
+      return await this.createNewToken(email);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  private async deleteExistingToken(email: string) {
+    const existingToken = await this.emailVerificationRepository.find({ identifier: email });
     if (existingToken) {
       await this.emailVerificationRepository.delete(existingToken.token);
     }
+  }
 
-    const verificationToken = this.emailVerificationRepository.create(email);
-
-    return verificationToken;
+  private async createNewToken(email: string): Promise<IVerificationToken> {
+    return await this.emailVerificationRepository.create(email);
   }
 
   async useVerificationToken(token: string): Promise<IVerificationToken> {
+    try {
+      this.validateToken(token);
+      const existingToken = await this.findExistingToken(token);
+      this.verifyTokenExpiry(existingToken);
+
+      await this.emailVerificationRepository.delete(existingToken.token);
+      return existingToken;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  private validateToken(token: string) {
     if (!token) {
       throw new AppError(ERROR_MESSAGES.BAD_REQUEST, STATUS_CODES.BAD_REQUEST);
     }
+  }
 
+  private async findExistingToken(token: string): Promise<IVerificationToken> {
     const existingToken = await this.emailVerificationRepository.find({ token });
-
     if (!existingToken) {
       throw new AppError('Verification token not found', STATUS_CODES.NOT_FOUND);
     }
-
-    const hasExpired = existingToken.expiresAt < new Date(Date.now());
-
-    if (hasExpired) {
-      throw new AppError('Verification token expired', STATUS_CODES.UNAUTHORIZED);
-    }
-
-    await this.emailVerificationRepository.delete(existingToken.token);
-
     return existingToken;
   }
 
-  async deleteToken(token: string): Promise<IVerificationToken> {
-    const deletedToken = await this.emailVerificationRepository.delete(token);
+  private verifyTokenExpiry(existingToken: IVerificationToken) {
+    const hasExpired = existingToken.expiresAt < new Date(Date.now());
+    if (hasExpired) {
+      throw new AppError('Verification token expired', STATUS_CODES.UNAUTHORIZED);
+    }
+  }
 
-    if (!deletedToken) {
+  async deleteToken(token: string): Promise<IVerificationToken> {
+    try {
+      return await this.emailVerificationRepository.delete(token);
+    } catch (error) {
       throw new AppError('Token not deleted', STATUS_CODES.INTERNAL_SERVER_ERROR);
     }
-
-    return deletedToken;
   }
 }

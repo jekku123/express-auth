@@ -61,7 +61,14 @@ export class UserController implements IUserController {
    * @desc For testing purposes
    */
   async onGetUser(req: Request, res: Response, next: NextFunction) {
-    const id = req.user.id;
+    const session = req.session;
+
+    if (!session.user) {
+      return res.status(STATUS_CODES.UNAUTHORIZED).send({ message: 'Not logged in' });
+    }
+
+    const id = session.user.id;
+
     try {
       const userProfile = await this.userService.getUser({ _id: id });
       if (!userProfile) {
