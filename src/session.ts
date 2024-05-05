@@ -15,10 +15,11 @@ export const sessionOptions = {
   secret: 'mysupersecrettestkey2000',
   cookie: {
     httpOnly: true,
-    secure: true,
+    secure: false,
+    sameSite: 'none',
     maxAge: 1000 * 60 * 60 * 7,
   },
   resave: false,
-  saveUninitialized: true,
+  saveUninitialized: false,
   store: sessionStore,
 } satisfies SessionOptions;

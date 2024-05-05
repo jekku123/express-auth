@@ -2,9 +2,8 @@ import { NextFunction, Request, Response } from 'express';
 import { inject, injectable } from 'inversify';
 import { INTERFACE_TYPE } from '../config/dependencies';
 
-import { cookieSettings } from '../config/cookieSettings';
+import AppError from '../config/errors/AppError';
 import { STATUS_CODES } from '../config/errors/statusCodes';
-import Session from '../models/session';
 import User from '../models/user';
 import VerificationToken from '../models/verification-token';
 import { IAuthController } from '../types/IAuthController';
@@ -35,33 +34,18 @@ export class AuthController implements IAuthController {
     const { email, password } = req.body;
 
     try {
-      const { sessionId, user } = await this.authService.login(email, password);
-      res.cookie('sessionId', sessionId, cookieSettings.httpOnly);
-      res.status(STATUS_CODES.OK).send(user);
-    } catch (error) {
-      next(error);
-    }
-  }
+      if (req.session.user) {
+        throw new AppError('Already logged in', STATUS_CODES.BAD_REQUEST);
+      }
+      const { user } = await this.authService.login(email, password);
 
-  async onLogin2(req: Request, res: Response, next: NextFunction) {
-    const { email, password } = req.body;
+      req.session.user = {
+        email: user.email,
+        id: user.id,
+        isLoggedIn: true,
+      };
 
-    const user = {
-      email: 'keke@keke.com',
-      id: '123',
-      isLoggedIn: true,
-    };
-
-    try {
-      // const { sessionId, user } = await this.authService.login(email, password);
-      // req.session.user = {
-      //   email: user.email,
-      //   id: user.id,
-      //   isLoggedIn: true,
-      // };
-      req.session.user = user;
       req.session.save();
-      // res.cookie('sessionId', sessionId, cookieSettings.httpOnly);
       res.status(STATUS_CODES.OK).send(user);
     } catch (error) {
       next(error);
@@ -73,35 +57,25 @@ export class AuthController implements IAuthController {
    * @desc Logout
    * @access Public
    */
-  async onLogout(req: Request, res: Response, next: NextFunction) {
-    const cookies = req.cookies;
 
-    if (!cookies?.sessionId) {
-      return res.sendStatus(STATUS_CODES.NO_CONTENT);
-    }
+  async onLogout(req: Request, res: Response, next: NextFunction) {
+    console.log('SESSION USER BEFORE LOGOUT: ', req.session.user);
 
     try {
-      this.authService.logout(cookies.sessionId);
-      res.clearCookie('sessionId', cookieSettings.httpOnly);
-      res.status(STATUS_CODES.OK).send({ message: 'Logged out' });
+      req.session.destroy((error) => {
+        if (error) {
+          return next(error);
+        }
+      });
+
+      console.log('SESSION USER AFTER LOGOUT: ', req.session);
+
+      res.clearCookie('connect.sid');
+      res.status(201).send({ message: 'Logged out' });
     } catch (error) {
       next(error);
     }
   }
-
-  // async onLogout(req: Request, res: Response, next: NextFunction) {
-  //   try {
-  //     req.session.destroy((error) => {
-  //       if (error) {
-  //         return next(error);
-  //       }
-  //     });
-  //     res.clearCookie('connect.sid');
-  //     res.status(201).send({ message: 'Logged out' });
-  //   } catch (error) {
-  //     next(error);
-  //   }
-  // }
 
   /**
    * @route GET /api/auth/test
@@ -110,9 +84,8 @@ export class AuthController implements IAuthController {
     try {
       const users = await User.find({});
       const verificationTokens = await VerificationToken.find({});
-      const sessions = await Session.find({});
 
-      res.status(STATUS_CODES.OK).send({ users, verificationTokens, sessions });
+      res.status(STATUS_CODES.OK).send({ users, verificationTokens });
     } catch (error) {
       next(error);
     }
