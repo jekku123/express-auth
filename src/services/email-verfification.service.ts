@@ -5,16 +5,16 @@ import { STATUS_CODES } from '../config/errors/statusCodes';
 import { IVerificationToken } from '../models/verification-token';
 
 import { ERROR_MESSAGES } from '../config/errors/errorMessages';
-import { IEmailEmailVerificationRepository } from '../types/IEmailVerificationRepository';
+import { IEmailVerificationRepository } from '../types/IEmailVerificationRepository';
 import { IEmailVerificationService } from '../types/IEmailVerificationService';
 
 @injectable()
 export default class EmailVerificationService implements IEmailVerificationService {
-  private emailVerificationRepository: IEmailEmailVerificationRepository;
+  private emailVerificationRepository: IEmailVerificationRepository;
 
   constructor(
     @inject(INTERFACE_TYPE.EmailVerificationRepository)
-    emailVerificationRepository: IEmailEmailVerificationRepository
+    emailVerificationRepository: IEmailVerificationRepository
   ) {
     this.emailVerificationRepository = emailVerificationRepository;
   }

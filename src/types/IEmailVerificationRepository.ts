@@ -1,6 +1,6 @@
 import { IVerificationToken } from '../models/verification-token';
 
-export interface IEmailEmailVerificationRepository {
+export interface IEmailVerificationRepository {
   create(identifier: string): Promise<IVerificationToken>;
   delete(token: string): Promise<IVerificationToken>;
   find(data: Partial<IVerificationToken>): Promise<IVerificationToken | null>;

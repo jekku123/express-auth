@@ -10,7 +10,7 @@ const services = {
   MailerService: Symbol.for('MailerService'),
   EmailVerificationService: Symbol.for('EmailVerificationService'),
   SessionService: Symbol.for('SessionService'),
-  PasswordResetService: Symbol.for('PasswordService'),
+  PasswordResetService: Symbol.for('PasswordResetService'),
 };
 
 const repositories = {

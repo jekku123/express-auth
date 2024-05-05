@@ -23,7 +23,7 @@ import { IUserService } from '../types/IUserService';
 import PasswordResetRepository from '../repositories/password-reset.repository';
 import EmailVerificationRepository from '../repositories/verification.repository';
 import PasswordResetService from '../services/password-reset.service';
-import { IEmailEmailVerificationRepository } from '../types/IEmailVerificationRepository';
+import { IEmailVerificationRepository } from '../types/IEmailVerificationRepository';
 import { IEmailVerificationService } from '../types/IEmailVerificationService';
 import { IPasswordResetRepository } from '../types/IPasswordResetRepository';
 import { IPasswordResetService } from '../types/IPasswordResetService';
@@ -34,7 +34,6 @@ container.bind<IAuthController>(INTERFACE_TYPE.AuthController).to(AuthController
 container.bind<IUserController>(INTERFACE_TYPE.UserController).to(UserController);
 
 container.bind<IAuthService>(INTERFACE_TYPE.AuthService).to(AuthService);
-container.bind<IUserService>(INTERFACE_TYPE.UserService).to(UserService);
 container.bind<IMailerService>(INTERFACE_TYPE.MailerService).to(MailerService);
 container
   .bind<IEmailVerificationService>(INTERFACE_TYPE.EmailVerificationService)
@@ -42,10 +41,11 @@ container
 container.bind<ILoggerService>(INTERFACE_TYPE.LoggerService).to(LoggerService);
 container.bind<ISessionService>(INTERFACE_TYPE.SessionService).to(SessionService);
 container.bind<IPasswordResetService>(INTERFACE_TYPE.PasswordResetService).to(PasswordResetService);
+container.bind<IUserService>(INTERFACE_TYPE.UserService).to(UserService);
 
 container.bind<IUserRepository>(INTERFACE_TYPE.UserRepository).to(UserRepository);
 container
-  .bind<IEmailEmailVerificationRepository>(INTERFACE_TYPE.EmailVerificationRepository)
+  .bind<IEmailVerificationRepository>(INTERFACE_TYPE.EmailVerificationRepository)
   .to(EmailVerificationRepository);
 container.bind<ISessionRepository>(INTERFACE_TYPE.SessionRepository).to(SessionRepository);
 container
