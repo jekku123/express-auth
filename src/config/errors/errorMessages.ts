@@ -13,6 +13,7 @@ export enum ERROR_MESSAGES {
   TOKEN_EXPIRED = 'Token expired',
   TOKEN_REVOCATION = 'Token revocation error',
   INVALID_TOKEN = 'Invalid token',
+  SESSION_EXPIRED = 'Session expired',
   MISSING_TOKEN = 'Token missing',
   CONFLICT = 'Conflict',
   USER_NOT_FOUND = 'User not found',

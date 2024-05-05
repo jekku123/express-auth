@@ -1,5 +1,5 @@
 import { inject, injectable } from 'inversify';
-import { INTERFACE_TYPE } from '../config/dependencies';
+import { INTERFACE_TYPE } from '../container/dependencies';
 
 import AppError from '../config/errors/AppError';
 import { ERROR_MESSAGES } from '../config/errors/errorMessages';

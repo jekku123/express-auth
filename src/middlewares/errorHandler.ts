@@ -4,8 +4,8 @@ import { ERROR_MESSAGES } from '../config/errors/errorMessages';
 import { STATUS_CODES } from '../config/errors/statusCodes';
 import { ILoggerService } from '../types/ILoggerService';
 
-import container from '../config/container';
-import { INTERFACE_TYPE } from '../config/dependencies';
+import container from '../container';
+import { INTERFACE_TYPE } from '../container/dependencies';
 
 const createErrorHandler = (logger: ILoggerService) => {
   return (err: Error, _req: Request, res: Response, next: NextFunction) => {

@@ -1,8 +1,8 @@
 import { inject, injectable } from 'inversify';
 
-import { INTERFACE_TYPE } from '../config/dependencies';
 import { ERROR_MESSAGES } from '../config/errors/errorMessages';
 import { STATUS_CODES } from '../config/errors/statusCodes';
+import { INTERFACE_TYPE } from '../container/dependencies';
 
 import AppError from '../config/errors/AppError';
 import { IUser } from '../models/user';
@@ -48,7 +48,8 @@ export class UserService implements IUserService {
       throw new AppError(ERROR_MESSAGES.USER_ALREADY_EXISTS, STATUS_CODES.CONFLICT, { email });
     }
 
-    const user = await this.userRepository.create(email, password);
+    const hashedPassword = await Bun.password.hash(password);
+    const user = await this.userRepository.create(email, hashedPassword);
 
     const { identifier, token } = await this.emailVerificationService.createVerificationToken(
       email

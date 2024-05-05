@@ -1,8 +1,5 @@
 import mongoose, { Document, Model, Schema } from 'mongoose';
 
-export const SESSION_ID_EXPIRES = 2 * 60 * 1000;
-export const SESSION_EXPIRATION_THRESHOLD = 1 * 60 * 1000;
-
 export interface ISession extends Document {
   sessionId: string;
   userId: Schema.Types.ObjectId;

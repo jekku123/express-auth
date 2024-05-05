@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import { inject, injectable } from 'inversify';
-import { INTERFACE_TYPE } from '../config/dependencies';
+import { INTERFACE_TYPE } from '../container/dependencies';
 
 import { cookieSettings } from '../config/cookieSettings';
 import { STATUS_CODES } from '../config/errors/statusCodes';

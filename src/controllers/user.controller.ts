@@ -1,9 +1,9 @@
 import { NextFunction, Request, Response } from 'express';
 import { inject, injectable } from 'inversify';
-import { INTERFACE_TYPE } from '../config/dependencies';
 import AppError from '../config/errors/AppError';
 import { ERROR_MESSAGES } from '../config/errors/errorMessages';
 import { STATUS_CODES } from '../config/errors/statusCodes';
+import { INTERFACE_TYPE } from '../container/dependencies';
 import { IUserController } from '../types/IUserController';
 import { IUserService } from '../types/IUserService';
 

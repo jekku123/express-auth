@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 import { inject, injectable } from 'inversify';
-import { INTERFACE_TYPE } from '../config/dependencies';
+import { INTERFACE_TYPE } from '../container/dependencies';
 import { ISession } from '../models/session';
 import { ISessionRepository } from '../types/ISessionRepository';
 import { ISessionService } from '../types/ISessionService';
@@ -54,5 +54,10 @@ export class SessionService implements ISessionService {
     }
 
     return session;
+  }
+
+  async findExpiredSessions(now: Date): Promise<ISession[]> {
+    const expiredSessions = await this.sessionRepository.findMany({});
+    return expiredSessions;
   }
 }

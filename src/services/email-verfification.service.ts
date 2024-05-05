@@ -1,7 +1,7 @@
 import { inject, injectable } from 'inversify';
-import { INTERFACE_TYPE } from '../config/dependencies';
 import AppError from '../config/errors/AppError';
 import { STATUS_CODES } from '../config/errors/statusCodes';
+import { INTERFACE_TYPE } from '../container/dependencies';
 import { IVerificationToken } from '../models/verification-token';
 
 import { ERROR_MESSAGES } from '../config/errors/errorMessages';

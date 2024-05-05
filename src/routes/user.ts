@@ -1,20 +1,20 @@
 import express from 'express';
-import { INTERFACE_TYPE } from '../config/dependencies';
+import { INTERFACE_TYPE } from '../container/dependencies';
 import { UserController } from '../controllers/user.controller';
 
-import container from '../config/container';
-import { validateSession } from '../middlewares/validateSession';
+import container from '../container';
+import { sessionValidator } from '../middlewares/sessionValidator';
 
 const router = express.Router();
 
 const controller = container.get<UserController>(INTERFACE_TYPE.UserController);
 
 router.post('/register', controller.onRegister.bind(controller));
+router.post('/verify-email', controller.onVerifyEmail.bind(controller));
+router.put('/update-password', controller.onUpdatePassword.bind(controller));
 
-router.use(validateSession);
+router.use(sessionValidator);
 
 router.get('/', controller.onGetUser.bind(controller));
-router.put('/update-password', controller.onUpdatePassword.bind(controller));
-router.post('/verify-email', controller.onVerifyEmail.bind(controller));
 
 export default router;

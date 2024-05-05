@@ -11,6 +11,7 @@ const services = {
   EmailVerificationService: Symbol.for('EmailVerificationService'),
   SessionService: Symbol.for('SessionService'),
   PasswordResetService: Symbol.for('PasswordService'),
+  SessionCleanupJob: Symbol.for('SessionCleanupJob'),
 };
 
 const repositories = {

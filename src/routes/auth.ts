@@ -1,6 +1,6 @@
 import express from 'express';
-import container from '../config/container';
-import { INTERFACE_TYPE } from '../config/dependencies';
+import container from '../container';
+import { INTERFACE_TYPE } from '../container/dependencies';
 import { AuthController } from '../controllers/auth.controller';
 
 const router = express.Router();

@@ -1,5 +1,4 @@
 import { Container } from 'inversify';
-import { INTERFACE_TYPE } from '../config/dependencies';
 import { AuthController } from '../controllers/auth.controller';
 import { UserController } from '../controllers/user.controller';
 import SessionRepository from '../repositories/session.repository';
@@ -19,7 +18,9 @@ import { ISessionService } from '../types/ISessionService';
 import { IUserController } from '../types/IUserController';
 import { IUserRepository } from '../types/IUserRepository';
 import { IUserService } from '../types/IUserService';
+import { INTERFACE_TYPE } from './dependencies';
 
+import SessionCleanupJob from '../cron/session-cleanup-job';
 import PasswordResetRepository from '../repositories/password-reset.repository';
 import EmailVerificationRepository from '../repositories/verification.repository';
 import PasswordResetService from '../services/password-reset.service';
@@ -27,6 +28,7 @@ import { IEmailEmailVerificationRepository } from '../types/IEmailVerificationRe
 import { IEmailVerificationService } from '../types/IEmailVerificationService';
 import { IPasswordResetRepository } from '../types/IPasswordResetRepository';
 import { IPasswordResetService } from '../types/IPasswordResetService';
+import { ISessionCleanupJob } from '../types/ISessionCleanupJob';
 
 const container = new Container();
 
@@ -51,5 +53,10 @@ container.bind<ISessionRepository>(INTERFACE_TYPE.SessionRepository).to(SessionR
 container
   .bind<IPasswordResetRepository>(INTERFACE_TYPE.PasswordResetRepository)
   .to(PasswordResetRepository);
+container.bind<ISessionCleanupJob>(INTERFACE_TYPE.SessionCleanupJob).to(SessionCleanupJob);
+
+export const sessionCleanupJob = container.get<ISessionCleanupJob>(
+  INTERFACE_TYPE.SessionCleanupJob
+);
 
 export default container;

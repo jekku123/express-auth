@@ -1,5 +1,5 @@
+import crypto from 'crypto';
 import mongoose, { Document, HydratedDocument, Model, Schema } from 'mongoose';
-import { generateRandomString } from '../utils';
 
 export interface IVerificationToken extends Document {
   token: string;
@@ -33,7 +33,7 @@ const verificationTokenSchema = new Schema<
 >({
   token: {
     type: String,
-    default: () => generateRandomString(),
+    default: () => crypto.randomBytes(32).toString('hex'),
   },
   expiresAt: {
     type: Date,
