@@ -6,7 +6,7 @@ const BASE_URL = Bun.env.BASE_URL;
 @injectable()
 export default class MailerService implements IMailerService {
   async sendVerificationEmail(to: string, token: string): Promise<void> {
-    const confirmLink = `${BASE_URL}/api/auth/verify-email?token=${token}`;
+    const confirmLink = `${BASE_URL}/api/user/verify-email?token=${token}`;
     console.log(
       'SendVerificationEmail',
       JSON.stringify(
@@ -23,7 +23,7 @@ export default class MailerService implements IMailerService {
   }
 
   async sendPasswordResetEmail(to: string, token: string): Promise<void> {
-    const resetLink = `${BASE_URL}/api/auth/reset-password?token=${token}`;
+    const resetLink = `${BASE_URL}/api/user/reset-password?token=${token}`;
     console.log(
       'SendPasswordResetEmail',
       JSON.stringify(

@@ -3,10 +3,10 @@ import { inject, injectable } from 'inversify';
 import { INTERFACE_TYPE } from '../container/dependencies';
 
 import { cookieSettings } from '../config/cookieSettings';
-import { STATUS_CODES } from '../config/errors/statusCodes';
+import { STATUS_CODES } from '../errors/statusCodes';
+import VerificationToken from '../models/email-verification';
 import Session from '../models/session';
 import User from '../models/user';
-import VerificationToken from '../models/verification-token';
 import { IAuthController } from '../types/IAuthController';
 import { IAuthService } from '../types/IAuthService';
 

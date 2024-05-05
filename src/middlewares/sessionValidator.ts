@@ -2,11 +2,11 @@ import { NextFunction, Request, Response } from 'express';
 
 import { SESSION_EXPIRATION_THRESHOLD, cookieSettings } from '../config/cookieSettings';
 
-import AppError from '../config/errors/AppError';
-import { ERROR_MESSAGES } from '../config/errors/errorMessages';
-import { STATUS_CODES } from '../config/errors/statusCodes';
 import container from '../container';
 import { INTERFACE_TYPE } from '../container/dependencies';
+import AppError from '../errors/AppError';
+import { ERROR_MESSAGES } from '../errors/errorMessages';
+import { STATUS_CODES } from '../errors/statusCodes';
 import { ISessionService } from '../types/ISessionService';
 
 export const createSessionValidator = (sessionService: ISessionService) =>

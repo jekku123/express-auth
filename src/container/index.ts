@@ -21,20 +21,30 @@ import { IUserService } from '../types/IUserService';
 import { INTERFACE_TYPE } from './dependencies';
 
 import SessionCleanupJob from '../cron/session-cleanup-job';
+import EmailVerificationRepository from '../repositories/email-verification.repository';
 import PasswordResetRepository from '../repositories/password-reset.repository';
-import EmailVerificationRepository from '../repositories/verification.repository';
 import PasswordResetService from '../services/password-reset.service';
-import { IEmailEmailVerificationRepository } from '../types/IEmailVerificationRepository';
+
+import { IEmailVerificationRepository } from '../types/IEmailVerificationRepository';
 import { IEmailVerificationService } from '../types/IEmailVerificationService';
 import { IPasswordResetRepository } from '../types/IPasswordResetRepository';
 import { IPasswordResetService } from '../types/IPasswordResetService';
 import { ISessionCleanupJob } from '../types/ISessionCleanupJob';
 
+/**
+ * Container for dependency injection
+ * @name Container
+ * @description Inversify container
+ * @method bind - Bind a dependency to a class
+ * @method get - Get a dependency
+ */
 const container = new Container();
 
+// Controllers
 container.bind<IAuthController>(INTERFACE_TYPE.AuthController).to(AuthController);
 container.bind<IUserController>(INTERFACE_TYPE.UserController).to(UserController);
 
+// Services
 container.bind<IAuthService>(INTERFACE_TYPE.AuthService).to(AuthService);
 container.bind<IUserService>(INTERFACE_TYPE.UserService).to(UserService);
 container.bind<IMailerService>(INTERFACE_TYPE.MailerService).to(MailerService);
@@ -45,9 +55,10 @@ container.bind<ILoggerService>(INTERFACE_TYPE.LoggerService).to(LoggerService);
 container.bind<ISessionService>(INTERFACE_TYPE.SessionService).to(SessionService);
 container.bind<IPasswordResetService>(INTERFACE_TYPE.PasswordResetService).to(PasswordResetService);
 
+// Repositories
 container.bind<IUserRepository>(INTERFACE_TYPE.UserRepository).to(UserRepository);
 container
-  .bind<IEmailEmailVerificationRepository>(INTERFACE_TYPE.EmailVerificationRepository)
+  .bind<IEmailVerificationRepository>(INTERFACE_TYPE.EmailVerificationRepository)
   .to(EmailVerificationRepository);
 container.bind<ISessionRepository>(INTERFACE_TYPE.SessionRepository).to(SessionRepository);
 container
@@ -55,6 +66,7 @@ container
   .to(PasswordResetRepository);
 container.bind<ISessionCleanupJob>(INTERFACE_TYPE.SessionCleanupJob).to(SessionCleanupJob);
 
+// Jobs
 export const sessionCleanupJob = container.get<ISessionCleanupJob>(
   INTERFACE_TYPE.SessionCleanupJob
 );

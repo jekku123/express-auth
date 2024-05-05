@@ -1,12 +1,12 @@
 import { inject, injectable } from 'inversify';
 
-import { INTERFACE_TYPE } from '../config/dependencies';
-import { ERROR_MESSAGES } from '../config/errors/errorMessages';
-import { STATUS_CODES } from '../config/errors/statusCodes';
+import { ERROR_MESSAGES } from '../errors/errorMessages';
+import { STATUS_CODES } from '../errors/statusCodes';
 
-import AppError from '../config/errors/AppError';
+import AppError from '../errors/AppError';
 import { IUser } from '../models/user';
 
+import { INTERFACE_TYPE } from '../container/dependencies';
 import { IEmailVerificationService } from '../types/IEmailVerificationService';
 import { ILoggerService } from '../types/ILoggerService';
 import { IMailerService } from '../types/IMailerService';
@@ -27,20 +27,88 @@ export class UserService implements IUserService {
   ) {}
 
   async register(email: string, password: string): Promise<IUser> {
-    try {
-      this.validateRegistrationData(email, password);
-      await this.checkIfUserExists(email);
+    this.validateRegistrationData(email, password);
+    await this.checkIfUserExists(email);
 
-      const hashedPassword = await this.hashPassword(password);
-      const user = await this.createUser(email, hashedPassword);
+    const hashedPassword = await this.hashPassword(password);
+    const user = await this.createUser(email, hashedPassword);
 
-      await this.sendVerificationEmail(email);
+    await this.sendVerificationEmail(email);
 
-      this.loggerService.info(`User with email ${email} registered`, UserService.name);
-      return user;
-    } catch (error) {
-      throw error;
+    this.loggerService.info(`User with email ${email} registered`, UserService.name);
+    return user;
+  }
+
+  async getUser(data: Partial<IUser>): Promise<IUser | null> {
+    return await this.userRepository.find(data);
+  }
+
+  async updatePassword(
+    userId: string,
+    oldPassword: string,
+    newPassword: string
+  ): Promise<IUser | null> {
+    this.validateUpdatePasswordData(userId, oldPassword, newPassword);
+
+    const user = await this.getUserById(userId);
+    await this.verifyOldPassword(oldPassword, user.password);
+
+    await this.setNewPassword(user, newPassword);
+
+    this.loggerService.info(`User with email ${user.email} updated password`, UserService.name);
+
+    return user;
+  }
+
+  async resetPassword(token: string, password: string): Promise<IUser> {
+    const email = await this.passwordResetService.verifyPasswordReset(token, password);
+    const user = await this.getUser({ email });
+
+    if (!user) {
+      throw new AppError(ERROR_MESSAGES.USER_NOT_FOUND, STATUS_CODES.NOT_FOUND);
     }
+
+    await this.setNewPassword(user, password);
+
+    this.loggerService.info(`User with email ${user.email} reset password`, UserService.name);
+
+    return user;
+  }
+
+  async verifyEmail(token: string): Promise<IUser> {
+    this.validateToken(token);
+
+    const verification = await this.emailVerificationService.useVerificationToken(token);
+    const existingUser = await this.getUser({ email: verification.identifier });
+
+    if (!existingUser) {
+      throw new AppError(ERROR_MESSAGES.USER_NOT_FOUND, STATUS_CODES.INTERNAL_SERVER_ERROR, {
+        email: verification.identifier,
+      });
+    }
+
+    await this.setEmailVerified(existingUser._id);
+
+    return existingUser;
+  }
+
+  async forgotPassword(email: string): Promise<void> {
+    if (!email) {
+      throw new AppError(ERROR_MESSAGES.BAD_REQUEST, STATUS_CODES.BAD_REQUEST);
+    }
+
+    this.passwordResetService.reset(email);
+  }
+
+  private async setEmailVerified(userId: string): Promise<IUser> {
+    const user = await this.userRepository.update(userId, { emailVerified: true });
+    if (!user) {
+      throw new AppError(ERROR_MESSAGES.USER_NOT_FOUND, STATUS_CODES.NOT_FOUND);
+    }
+
+    this.loggerService.info(`User with id ${userId} email verified`, UserService.name);
+
+    return user;
   }
 
   private validateRegistrationData(email: string, password: string) {
@@ -50,7 +118,7 @@ export class UserService implements IUserService {
   }
 
   private async checkIfUserExists(email: string) {
-    const existingUser = await this.userRepository.findOne({ email });
+    const existingUser = await this.userRepository.find({ email });
     if (existingUser) {
       throw new AppError(ERROR_MESSAGES.USER_ALREADY_EXISTS, STATUS_CODES.CONFLICT, { email });
     }
@@ -61,7 +129,11 @@ export class UserService implements IUserService {
   }
 
   private async createUser(email: string, hashedPassword: string): Promise<IUser> {
-    return await this.userRepository.create(email, hashedPassword);
+    const user = await this.userRepository.create(email, hashedPassword);
+    if (!user) {
+      throw new AppError(ERROR_MESSAGES.INTERNAL_SERVER_ERROR, STATUS_CODES.INTERNAL_SERVER_ERROR);
+    }
+    return user;
   }
 
   private async sendVerificationEmail(email: string) {
@@ -71,31 +143,6 @@ export class UserService implements IUserService {
     await this.mailerService.sendVerificationEmail(identifier, token);
   }
 
-  async getUser(data: Partial<IUser>): Promise<IUser | null> {
-    return await this.userRepository.findOne(data);
-  }
-
-  async updatePassword(
-    userId: string,
-    oldPassword: string,
-    newPassword: string
-  ): Promise<IUser | null> {
-    try {
-      this.validateUpdatePasswordData(userId, oldPassword, newPassword);
-
-      const user = await this.getUserById(userId);
-      await this.verifyOldPassword(oldPassword, user.password);
-
-      await this.setNewPassword(user, newPassword);
-
-      this.loggerService.info(`User with email ${user.email} updated password`, UserService.name);
-
-      return user;
-    } catch (error) {
-      throw error;
-    }
-  }
-
   private validateUpdatePasswordData(userId: string, oldPassword: string, newPassword: string) {
     if (!userId || !oldPassword || !newPassword) {
       throw new AppError(ERROR_MESSAGES.MISSING_CREDENTIALS, STATUS_CODES.BAD_REQUEST);
@@ -103,7 +150,7 @@ export class UserService implements IUserService {
   }
 
   private async getUserById(userId: string): Promise<IUser> {
-    const user = await this.userRepository.findOne({ _id: userId });
+    const user = await this.userRepository.find({ _id: userId });
     if (!user) {
       throw new AppError(ERROR_MESSAGES.USER_NOT_FOUND, STATUS_CODES.NOT_FOUND);
     }
@@ -122,75 +169,9 @@ export class UserService implements IUserService {
     await this.userRepository.save(user);
   }
 
-  async resetPassword(token: string, password: string): Promise<IUser> {
-    try {
-      const email = await this.verifyPasswordResetToken(token, password);
-      const user = await this.getUser({ email });
-
-      if (!user) {
-        throw new AppError(ERROR_MESSAGES.USER_NOT_FOUND, STATUS_CODES.NOT_FOUND);
-      }
-
-      await this.setNewPassword(user, password);
-      this.loggerService.info(`User with email ${user.email} reset password`, UserService.name);
-
-      return user;
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  private async verifyPasswordResetToken(token: string, password: string): Promise<string> {
-    return await this.passwordResetService.verifyPasswordResetToken(token, password);
-  }
-
-  async setEmailVerified(userId: string): Promise<IUser> {
-    try {
-      const user = await this.userRepository.update(userId, { emailVerified: true });
-      if (!user) {
-        throw new AppError(ERROR_MESSAGES.USER_NOT_FOUND, STATUS_CODES.NOT_FOUND);
-      }
-
-      this.loggerService.info(`User with id ${userId} email verified`, UserService.name);
-
-      return user;
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  async verifyEmail(token: string): Promise<IUser> {
-    try {
-      this.validateToken(token);
-
-      const verification = await this.emailVerificationService.useVerificationToken(token);
-      const existingUser = await this.getUser({ email: verification.identifier });
-
-      if (!existingUser) {
-        throw new AppError(ERROR_MESSAGES.USER_NOT_FOUND, STATUS_CODES.INTERNAL_SERVER_ERROR, {
-          email: verification.identifier,
-        });
-      }
-
-      await this.setEmailVerified(existingUser._id);
-
-      return existingUser;
-    } catch (error) {
-      throw error;
-    }
-  }
-
   private validateToken(token: string) {
     if (!token) {
       throw new AppError(ERROR_MESSAGES.BAD_REQUEST, STATUS_CODES.BAD_REQUEST);
     }
-  }
-
-  async forgotPassword(email: string): Promise<void> {
-    if (!email) {
-      throw new AppError(ERROR_MESSAGES.BAD_REQUEST, STATUS_CODES.BAD_REQUEST);
-    }
-
-    this.passwordResetService.reset(email);
   }
 }

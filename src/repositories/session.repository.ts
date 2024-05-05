@@ -1,7 +1,7 @@
 import { injectable } from 'inversify';
 import { FilterQuery } from 'mongoose';
-import AppError from '../config/errors/AppError';
-import { STATUS_CODES } from '../config/errors/statusCodes';
+import AppError from '../errors/AppError';
+import { STATUS_CODES } from '../errors/statusCodes';
 import Session, { ISession } from '../models/session';
 import { ISessionRepository } from '../types/ISessionRepository';
 
@@ -28,10 +28,5 @@ export default class SessionRepository implements ISessionRepository {
   async findMany(data: FilterQuery<ISession>): Promise<ISession[]> {
     const sessions = await Session.find(data);
     return sessions;
-  }
-
-  async save(session: ISession): Promise<ISession> {
-    const savedSession = await session.save();
-    return savedSession;
   }
 }

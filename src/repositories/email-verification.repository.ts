@@ -1,12 +1,12 @@
 import { injectable } from 'inversify';
 import { FilterQuery } from 'mongoose';
-import AppError from '../config/errors/AppError';
-import { STATUS_CODES } from '../config/errors/statusCodes';
-import VerificationToken, { IVerificationToken } from '../models/verification-token';
-import { IEmailEmailVerificationRepository } from '../types/IEmailVerificationRepository';
+import AppError from '../errors/AppError';
+import { STATUS_CODES } from '../errors/statusCodes';
+import VerificationToken, { IVerificationToken } from '../models/email-verification';
+import { IEmailVerificationRepository } from '../types/IEmailVerificationRepository';
 
 @injectable()
-export default class EmailVerificationRepository implements IEmailEmailVerificationRepository {
+export default class EmailVerificationRepository implements IEmailVerificationRepository {
   async create(identifier: string): Promise<IVerificationToken> {
     const token = VerificationToken.create({ identifier });
     return token;
@@ -23,10 +23,5 @@ export default class EmailVerificationRepository implements IEmailEmailVerificat
       throw new AppError('Token not deleted', STATUS_CODES.INTERNAL_SERVER_ERROR);
     }
     return deletedToken;
-  }
-
-  async save(token: IVerificationToken): Promise<IVerificationToken> {
-    const savedToken = await token.save();
-    return savedToken;
   }
 }

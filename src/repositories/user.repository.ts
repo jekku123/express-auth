@@ -1,7 +1,7 @@
 import { injectable } from 'inversify';
 import { FilterQuery } from 'mongoose';
-import AppError from '../config/errors/AppError';
-import { STATUS_CODES } from '../config/errors/statusCodes';
+import AppError from '../errors/AppError';
+import { STATUS_CODES } from '../errors/statusCodes';
 import User, { IUser } from '../models/user';
 import { IUserRepository } from '../types/IUserRepository';
 
@@ -12,7 +12,7 @@ export default class UserRepository implements IUserRepository {
     return user;
   }
 
-  async findOne(data: FilterQuery<IUser>): Promise<IUser | null> {
+  async find(data: FilterQuery<IUser>): Promise<IUser | null> {
     const user = await User.findOne(data);
     return user;
   }

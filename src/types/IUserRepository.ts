@@ -2,7 +2,7 @@ import { IUser } from '../models/user';
 
 export interface IUserRepository {
   create(email: string, password: string): Promise<IUser>;
-  findOne(data: Partial<IUser>): Promise<IUser | null>;
+  find(data: Partial<IUser>): Promise<IUser | null>;
   update: (id: string, data: Partial<IUser>) => Promise<IUser>;
   delete(userId: string): Promise<IUser>;
   save(user: IUser): Promise<IUser>;

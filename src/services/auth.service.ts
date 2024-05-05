@@ -1,9 +1,8 @@
 import { inject, injectable } from 'inversify';
-import { INTERFACE_TYPE } from '../config/dependencies';
 
-import AppError from '../config/errors/AppError';
-import { ERROR_MESSAGES } from '../config/errors/errorMessages';
-import { STATUS_CODES } from '../config/errors/statusCodes';
+import AppError from '../errors/AppError';
+import { ERROR_MESSAGES } from '../errors/errorMessages';
+import { STATUS_CODES } from '../errors/statusCodes';
 import { IAuthService } from '../types/IAuthService';
 
 import { ILoggerService } from '../types/ILoggerService';
@@ -15,7 +14,9 @@ import { IUserService } from '../types/IUserService';
  * @method login - Login
  */
 
+import { INTERFACE_TYPE } from '../container/dependencies';
 import { IUser } from '../models/user';
+import { ISessionService } from '../types/ISessionService';
 
 /**
  * @name AuthService
@@ -26,24 +27,27 @@ import { IUser } from '../models/user';
 export class AuthService implements IAuthService {
   constructor(
     @inject(INTERFACE_TYPE.UserService) private userService: IUserService,
-    @inject(INTERFACE_TYPE.LoggerService) private loggerService: ILoggerService
+    @inject(INTERFACE_TYPE.LoggerService) private loggerService: ILoggerService,
+    @inject(INTERFACE_TYPE.SessionService) private sessionService: ISessionService
   ) {}
 
   async login(email: string, password: string) {
-    try {
-      this.validateCredentials(email, password);
+    this.validateCredentials(email, password);
 
-      const user = await this.getUserByEmail(email);
+    const user = await this.getUserByEmail(email);
 
-      await this.verifyPassword(password, user.password);
+    await this.verifyPassword(password, user.password);
+    this.verifyEmailVerification(user.emailVerified, email);
 
-      this.verifyEmailVerification(user.emailVerified, email);
+    this.loggerService.info(`User with email ${email} logged in`, { service: AuthService.name });
 
-      this.loggerService.info(`User with email ${email} logged in`, { service: AuthService.name });
+    return this.getUserResponse(user);
+  }
 
-      return this.getUserResponse(user);
-    } catch (error) {
-      throw error;
+  async logout(sessionId: string) {
+    const logoutResult = await this.sessionService.deleteSession(sessionId);
+    if (!logoutResult) {
+      throw new AppError('Session not deleted', STATUS_CODES.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -80,6 +84,7 @@ export class AuthService implements IAuthService {
         id: user._id,
         email: user.email,
       },
+      sessionId: 'keke',
     };
   }
 }

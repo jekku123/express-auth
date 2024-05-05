@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
-import AppError from '../config/errors/AppError';
-import { ERROR_MESSAGES } from '../config/errors/errorMessages';
-import { STATUS_CODES } from '../config/errors/statusCodes';
+import AppError from '../errors/AppError';
+import { ERROR_MESSAGES } from '../errors/errorMessages';
+import { STATUS_CODES } from '../errors/statusCodes';
 import { ILoggerService } from '../types/ILoggerService';
 
 import container from '../container';

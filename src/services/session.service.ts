@@ -1,19 +1,16 @@
 import crypto from 'crypto';
 import { inject, injectable } from 'inversify';
+import { SESSION_ID_EXPIRES } from '../config/cookieSettings';
 import { INTERFACE_TYPE } from '../container/dependencies';
 import { ISession } from '../models/session';
 import { ISessionRepository } from '../types/ISessionRepository';
 import { ISessionService } from '../types/ISessionService';
 
-export const SESSION_TOKEN_DURATION = 10 * 60 * 1000;
-
 @injectable()
 export class SessionService implements ISessionService {
-  private sessionRepository: ISessionRepository;
-
-  constructor(@inject(INTERFACE_TYPE.SessionRepository) sessionRepository: ISessionRepository) {
-    this.sessionRepository = sessionRepository;
-  }
+  constructor(
+    @inject(INTERFACE_TYPE.SessionRepository) private sessionRepository: ISessionRepository
+  ) {}
 
   async createSession(userId: ISession['userId']): Promise<ISession> {
     const { token, expiresAt } = this.generateSessionId();
@@ -36,16 +33,6 @@ export class SessionService implements ISessionService {
     return session;
   }
 
-  generateSessionId(): { token: string; expiresAt: string } {
-    const sessionId = crypto.randomBytes(32).toString('hex');
-    const expiresAt = new Date(Date.now() + SESSION_TOKEN_DURATION).toISOString();
-
-    return {
-      token: sessionId,
-      expiresAt: expiresAt,
-    };
-  }
-
   async deleteSession(sessionId: string): Promise<ISession> {
     const session = await this.sessionRepository.delete(sessionId);
 
@@ -59,5 +46,15 @@ export class SessionService implements ISessionService {
   async findExpiredSessions(now: Date): Promise<ISession[]> {
     const expiredSessions = await this.sessionRepository.findMany({});
     return expiredSessions;
+  }
+
+  private generateSessionId(): { token: string; expiresAt: string } {
+    const sessionId = crypto.randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + SESSION_ID_EXPIRES).toISOString();
+
+    return {
+      token: sessionId,
+      expiresAt: expiresAt,
+    };
   }
 }

@@ -20,22 +20,22 @@ fi
 cd "$COMPOSE_DIR" || exit
 
 case "$1" in
-start)
+up)
     docker-compose up -d
     echo "Docker Compose started in detached mode."
     ;;
-stop)
+down)
     docker-compose down
     echo "Docker Compose services stopped."
     ;;
-restart)
+redo)
     docker-compose down
     echo "Docker Compose services stopped."
 
     rm -rf "$MONGO_DIR"
     echo "MongoDB data folder removed."
 
-    docker-compose up -d
+    docker-compose up -d --build
     echo "Docker Compose restarted in detached mode."
     ;;
 *)
