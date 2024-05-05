@@ -43,6 +43,31 @@ export class AuthController implements IAuthController {
     }
   }
 
+  async onLogin2(req: Request, res: Response, next: NextFunction) {
+    const { email, password } = req.body;
+
+    const user = {
+      email: 'keke@keke.com',
+      id: '123',
+      isLoggedIn: true,
+    };
+
+    try {
+      // const { sessionId, user } = await this.authService.login(email, password);
+      // req.session.user = {
+      //   email: user.email,
+      //   id: user.id,
+      //   isLoggedIn: true,
+      // };
+      req.session.user = user;
+      req.session.save();
+      // res.cookie('sessionId', sessionId, cookieSettings.httpOnly);
+      res.status(STATUS_CODES.OK).send(user);
+    } catch (error) {
+      next(error);
+    }
+  }
+
   /**
    * @route POST /api/auth/logout
    * @desc Logout
@@ -63,6 +88,20 @@ export class AuthController implements IAuthController {
       next(error);
     }
   }
+
+  // async onLogout(req: Request, res: Response, next: NextFunction) {
+  //   try {
+  //     req.session.destroy((error) => {
+  //       if (error) {
+  //         return next(error);
+  //       }
+  //     });
+  //     res.clearCookie('connect.sid');
+  //     res.status(201).send({ message: 'Logged out' });
+  //   } catch (error) {
+  //     next(error);
+  //   }
+  // }
 
   /**
    * @route GET /api/auth/test

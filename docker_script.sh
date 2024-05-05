@@ -35,7 +35,7 @@ restart)
     rm -rf "$MONGO_DIR"
     echo "MongoDB data folder removed."
 
-    docker-compose up -d
+    docker-compose up -d --build
     echo "Docker Compose restarted in detached mode."
     ;;
 *)

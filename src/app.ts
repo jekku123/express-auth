@@ -1,9 +1,3 @@
-import mongoose from 'mongoose';
-import 'reflect-metadata';
-
-const PORT = Bun.env.PORT || 8080;
-const MONGO_URI = Bun.env.MONGO_URI as string;
-
 import cors from 'cors';
 import express from 'express';
 import helmet from 'helmet';
@@ -31,13 +25,4 @@ app.use('/api/user', userRoutes);
 
 app.use(errorHandler);
 
-mongoose
-  .connect(MONGO_URI)
-  .then(() => {
-    app.listen(PORT, () => {
-      console.log(`Connected to MongoDB and listening on port: ${PORT}`);
-    });
-  })
-  .catch((error) => {
-    console.log(error.message);
-  });
+export default app;
