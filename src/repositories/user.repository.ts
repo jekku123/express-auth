@@ -37,8 +37,8 @@ export default class UserRepository implements IUserRepository {
     return user;
   }
 
-  async save(user: IUser): Promise<IUser> {
-    const savedUser = await user.save();
-    return savedUser;
-  }
+  // async save(user: IUser): Promise<IUser> {
+  //   const savedUser = await user.save();
+  //   return savedUser;
+  // }
 }

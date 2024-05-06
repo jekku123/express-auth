@@ -1,7 +1,8 @@
 import crypto from 'crypto';
-import mongoose, { Document, Model, Schema } from 'mongoose';
+import mongoose, { Model, Schema } from 'mongoose';
 
-export interface IEmailVerification extends Document {
+export interface IEmailVerification {
+  id: string;
   token: string;
   identifier: string;
   expiresAt: Date;

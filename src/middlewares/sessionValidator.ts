@@ -29,7 +29,7 @@ export const createSessionValidator = (sessionService: ISessionService) =>
       const timeLeft = new Date(session.expiresAt).getTime() - now;
 
       if (timeLeft <= SESSION_EXPIRATION_THRESHOLD) {
-        const newSession = await sessionService.createSession(session.userId);
+        const newSession = await sessionService.createSession(session.userId.toString());
         await sessionService.deleteSession(session.sessionId);
 
         res.cookie('sessionId', newSession.sessionId, cookieSettings.httpOnly);

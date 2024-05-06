@@ -5,6 +5,7 @@ import { INTERFACE_TYPE } from '../container/dependencies';
 import { cookieSettings } from '../config/cookieSettings';
 import { STATUS_CODES } from '../errors/statusCodes';
 import EmailVerification from '../models/email-verification';
+import PasswordReset from '../models/password-reset';
 import Session from '../models/session';
 import User from '../models/user';
 import { IAuthController } from '../types/IAuthController';
@@ -71,8 +72,11 @@ export class AuthController implements IAuthController {
       const users = await User.find({});
       const emailVerifications = await EmailVerification.find({});
       const sessions = await Session.find({});
+      const passwordResetTokens = await PasswordReset.find({});
 
-      res.status(STATUS_CODES.OK).send({ users, emailVerifications, sessions });
+      res
+        .status(STATUS_CODES.OK)
+        .send({ users, emailVerifications, sessions, passwordResetTokens });
     } catch (error) {
       next(error);
     }

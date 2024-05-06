@@ -1,7 +1,8 @@
 import crypto from 'crypto';
-import mongoose, { Document, Model, Schema } from 'mongoose';
+import mongoose, { Model, Schema } from 'mongoose';
 
-export interface IPasswordReset extends Document {
+export interface IPasswordReset {
+  id: string;
   token: string;
   identifier: string;
   expiresAt: Date;

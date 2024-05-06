@@ -6,6 +6,8 @@ export enum ERROR_MESSAGES {
   BAD_REQUEST = 'Bad Request',
   NO_CONTENT = 'No Content',
   USER_NOT_FOUND = 'User not found',
+
+  PASSWORD_NOT_UPDATED = 'Password not updated',
   USER_NOT_CREATED = 'User not created',
   INVALID_CREDENTIALS = 'Invalid name or password',
   INVALID_PASSWORD = 'Invalid password',

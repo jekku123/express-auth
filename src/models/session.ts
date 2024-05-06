@@ -1,8 +1,9 @@
-import mongoose, { Document, Model, Schema } from 'mongoose';
+import mongoose, { Model, Schema } from 'mongoose';
 
-export interface ISession extends Document {
+export interface ISession {
+  id: string;
   sessionId: string;
-  userId: Schema.Types.ObjectId;
+  userId: string;
   expiresAt: Date;
 }
 
@@ -19,7 +20,7 @@ const sessionSchema = new Schema<ISession, SessionModel, ISessionMethods>({
     type: Date,
   },
   userId: {
-    type: Schema.Types.ObjectId,
+    type: String,
     ref: 'User',
     required: [true, 'userId is required'],
   },

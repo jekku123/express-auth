@@ -74,7 +74,7 @@ export class UserService implements IUserService {
     const user = await this.findUserById(userId);
     await this.verifyPassword(oldPassword, user.password);
 
-    await this.setNewPassword(user, newPassword);
+    await this.setNewPassword(user.id, newPassword);
 
     this.loggerService.info(`User with email ${user.email} updated password`, UserService.name);
 
@@ -85,7 +85,7 @@ export class UserService implements IUserService {
     const email = await this.passwordResetService.verifyPasswordReset(token, password);
     const user = await this.findUserByEmail(email);
 
-    await this.setNewPassword(user, password);
+    await this.setNewPassword(user.id, password);
 
     this.loggerService.info(`User with email ${user.email} reset password`, UserService.name);
 
@@ -167,9 +167,12 @@ export class UserService implements IUserService {
     }
   }
 
-  private async setNewPassword(user: IUser, newPassword: string) {
-    user.password = await Bun.password.hash(newPassword);
-    await this.userRepository.save(user);
+  private async setNewPassword(userId: string, newPassword: string) {
+    const hashedPassword = await this.hashPassword(newPassword);
+    const updatedUser = await this.userRepository.update(userId, { password: hashedPassword });
+    if (!updatedUser) {
+      throw new InternalServerError(ERROR_MESSAGES.PASSWORD_NOT_UPDATED);
+    }
   }
 
   private validateToken(token: string) {
