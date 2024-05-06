@@ -1,12 +1,13 @@
 import { inject, injectable } from 'inversify';
 
 import { ERROR_MESSAGES } from '../errors/error-messages';
-import { STATUS_CODES } from '../errors/statusCodes';
 
-import AppError from '../errors/app-error';
 import { IUser } from '../models/user';
 
 import { INTERFACE_TYPE } from '../container/dependencies';
+import { UnauthorizedError } from '../errors/auth-error';
+import { BadRequestError, ConflictError, NotFoundError } from '../errors/client-error';
+import { InternalServerError } from '../errors/server-error';
 import { IEmailVerificationService } from '../types/IEmailVerificationService';
 import { ILoggerService } from '../types/ILoggerService';
 import { IMailerService } from '../types/IMailerService';
@@ -39,8 +40,28 @@ export class UserService implements IUserService {
     return user;
   }
 
-  async getUser(data: Partial<IUser>): Promise<IUser | null> {
-    return await this.userRepository.find(data);
+  async findUser(data: Partial<IUser>): Promise<IUser> {
+    const user = await this.userRepository.find(data);
+    if (!user) {
+      throw new NotFoundError(ERROR_MESSAGES.USER_NOT_FOUND, data);
+    }
+    return user;
+  }
+
+  async findUserById(userId: string): Promise<IUser> {
+    const user = await this.userRepository.findById(userId);
+    if (!user) {
+      throw new NotFoundError(ERROR_MESSAGES.USER_NOT_FOUND, { userId });
+    }
+    return user;
+  }
+
+  async findUserByEmail(email: string): Promise<IUser> {
+    const user = await this.findUser({ email });
+    if (!user) {
+      throw new NotFoundError(ERROR_MESSAGES.USER_NOT_FOUND, { email });
+    }
+    return user;
   }
 
   async updatePassword(
@@ -50,8 +71,8 @@ export class UserService implements IUserService {
   ): Promise<IUser | null> {
     this.validateUpdatePasswordData(userId, oldPassword, newPassword);
 
-    const user = await this.getUserById(userId);
-    await this.verifyOldPassword(oldPassword, user.password);
+    const user = await this.findUserById(userId);
+    await this.verifyPassword(oldPassword, user.password);
 
     await this.setNewPassword(user, newPassword);
 
@@ -62,11 +83,7 @@ export class UserService implements IUserService {
 
   async resetPassword(token: string, password: string): Promise<IUser> {
     const email = await this.passwordResetService.verifyPasswordReset(token, password);
-    const user = await this.getUser({ email });
-
-    if (!user) {
-      throw new AppError(ERROR_MESSAGES.USER_NOT_FOUND, STATUS_CODES.NOT_FOUND);
-    }
+    const user = await this.findUserByEmail(email);
 
     await this.setNewPassword(user, password);
 
@@ -79,13 +96,7 @@ export class UserService implements IUserService {
     this.validateToken(token);
 
     const verification = await this.emailVerificationService.useEmailVerification(token);
-    const existingUser = await this.getUser({ email: verification.identifier });
-
-    if (!existingUser) {
-      throw new AppError(ERROR_MESSAGES.USER_NOT_FOUND, STATUS_CODES.INTERNAL_SERVER_ERROR, {
-        email: verification.identifier,
-      });
-    }
+    const existingUser = await this.findUserByEmail(verification.identifier);
 
     await this.setEmailVerified(existingUser.id);
 
@@ -94,7 +105,7 @@ export class UserService implements IUserService {
 
   async forgotPassword(email: string): Promise<void> {
     if (!email) {
-      throw new AppError(ERROR_MESSAGES.BAD_REQUEST, STATUS_CODES.BAD_REQUEST);
+      throw new BadRequestError(ERROR_MESSAGES.MISSING_EMAIL);
     }
 
     this.passwordResetService.reset(email);
@@ -103,7 +114,7 @@ export class UserService implements IUserService {
   private async setEmailVerified(userId: string): Promise<IUser> {
     const user = await this.userRepository.update(userId, { emailVerified: true });
     if (!user) {
-      throw new AppError(ERROR_MESSAGES.USER_NOT_FOUND, STATUS_CODES.NOT_FOUND);
+      throw new InternalServerError(ERROR_MESSAGES.INTERNAL_SERVER_ERROR);
     }
 
     this.loggerService.info(`User with id ${userId} email verified`, UserService.name);
@@ -113,14 +124,14 @@ export class UserService implements IUserService {
 
   private validateRegistrationData(email: string, password: string) {
     if (!email || !password) {
-      throw new AppError(ERROR_MESSAGES.MISSING_CREDENTIALS, STATUS_CODES.BAD_REQUEST);
+      throw new BadRequestError(ERROR_MESSAGES.MISSING_CREDENTIALS);
     }
   }
 
   private async checkIfUserExists(email: string) {
     const existingUser = await this.userRepository.find({ email });
     if (existingUser) {
-      throw new AppError(ERROR_MESSAGES.USER_ALREADY_EXISTS, STATUS_CODES.CONFLICT, { email });
+      throw new ConflictError(ERROR_MESSAGES.USER_EXISTS, { email });
     }
   }
 
@@ -131,7 +142,7 @@ export class UserService implements IUserService {
   private async createUser(email: string, hashedPassword: string): Promise<IUser> {
     const user = await this.userRepository.create(email, hashedPassword);
     if (!user) {
-      throw new AppError(ERROR_MESSAGES.INTERNAL_SERVER_ERROR, STATUS_CODES.INTERNAL_SERVER_ERROR);
+      throw new InternalServerError(ERROR_MESSAGES.USER_NOT_CREATED);
     }
     return user;
   }
@@ -145,22 +156,14 @@ export class UserService implements IUserService {
 
   private validateUpdatePasswordData(userId: string, oldPassword: string, newPassword: string) {
     if (!userId || !oldPassword || !newPassword) {
-      throw new AppError(ERROR_MESSAGES.MISSING_CREDENTIALS, STATUS_CODES.BAD_REQUEST);
+      throw new BadRequestError(ERROR_MESSAGES.MISSING_CREDENTIALS);
     }
   }
 
-  private async getUserById(userId: string): Promise<IUser> {
-    const user = await this.userRepository.findById(userId);
-    if (!user) {
-      throw new AppError(ERROR_MESSAGES.USER_NOT_FOUND, STATUS_CODES.NOT_FOUND);
-    }
-    return user;
-  }
-
-  private async verifyOldPassword(oldPassword: string, storedPassword: string) {
+  private async verifyPassword(oldPassword: string, storedPassword: string) {
     const isPasswordValid = await Bun.password.verify(oldPassword, storedPassword);
     if (!isPasswordValid) {
-      throw new AppError(ERROR_MESSAGES.INVALID_CREDENTIALS, STATUS_CODES.UNAUTHORIZED);
+      throw new UnauthorizedError(ERROR_MESSAGES.INVALID_PASSWORD);
     }
   }
 
@@ -171,7 +174,7 @@ export class UserService implements IUserService {
 
   private validateToken(token: string) {
     if (!token) {
-      throw new AppError(ERROR_MESSAGES.BAD_REQUEST, STATUS_CODES.BAD_REQUEST);
+      throw new BadRequestError(ERROR_MESSAGES.INVALID_TOKEN);
     }
   }
 }

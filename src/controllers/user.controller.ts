@@ -59,7 +59,7 @@ export class UserController implements IUserController {
   async onGetUser(req: Request, res: Response, next: NextFunction) {
     const id = req.user.id;
     try {
-      const userProfile = await this.userService.getUser({ _id: id });
+      const userProfile = await this.userService.findUserById(id);
       if (!userProfile) {
         return res.status(404).send({ message: 'User not found' });
       }

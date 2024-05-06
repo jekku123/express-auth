@@ -6,12 +6,6 @@ import { IAuthService } from '../types/IAuthService';
 import { ILoggerService } from '../types/ILoggerService';
 import { IUserService } from '../types/IUserService';
 
-/**
- * @name AuthService
- * @description Service for authentication operations
- * @method login - Login
- */
-
 import { INTERFACE_TYPE } from '../container/dependencies';
 import { UnauthorizedError } from '../errors/auth-error';
 import { BadRequestError, NotFoundError } from '../errors/client-error';
@@ -21,12 +15,12 @@ import { IUser } from '../models/user';
 import { ISessionService } from '../types/ISessionService';
 import { IUserResponse } from '../types/IUserResponse';
 
-/**
- * @name AuthService
- * @description Service for authentication operations
- * @method login - Login
- */
 @injectable()
+/**
+ * AuthService
+ * Service for managing authentication operations, such as user login and logout.
+ * Interacts with UserService and SessionService to authenticate users and manage sessions.
+ */
 export class AuthService implements IAuthService {
   constructor(
     @inject(INTERFACE_TYPE.UserService) private userService: IUserService,
@@ -34,10 +28,20 @@ export class AuthService implements IAuthService {
     @inject(INTERFACE_TYPE.SessionService) private sessionService: ISessionService
   ) {}
 
+  /**
+   * Authenticates a user with the provided email and password.
+   * @param email - The user's email address.
+   * @param password - The user's password.
+   * @returns An object containing the user's information and session ID.
+   * @throws BadRequestError if the email or password is missing.
+   * @throws NotFoundError if the user is not found.
+   * @throws UnauthorizedError if the password is invalid or the email is not verified.
+   * @throws InternalServerError if session creation fails.
+   */
   async login(email: string, password: string) {
     this.validateCredentials(email, password);
 
-    const user = await this.getUserByEmail(email);
+    const user = await this.findUserByEmail(email);
 
     await this.verifyPassword(password, user.password);
     this.verifyEmailVerification(user.emailVerified, email);
@@ -49,6 +53,11 @@ export class AuthService implements IAuthService {
     return this.getUserResponse(user, sessionId);
   }
 
+  /**
+   * Logs out a user by deleting their session.
+   * @param sessionId - The ID of the session to delete.
+   * @throws InternalServerError if the session could not be deleted.
+   */
   async logout(sessionId: string) {
     const logoutResult = await this.sessionService.deleteSession(sessionId);
     if (!logoutResult) {
@@ -56,20 +65,38 @@ export class AuthService implements IAuthService {
     }
   }
 
+  /**
+   * Validates that email and password are not missing.
+   * @param email - The user's email address.
+   * @param password - The user's password.
+   * @throws BadRequestError if either the email or password is missing.
+   */
   private validateCredentials(email: string, password: string) {
     if (!email || !password) {
       throw new BadRequestError(ERROR_MESSAGES.BAD_REQUEST);
     }
   }
 
-  private async getUserByEmail(email: string): Promise<IUser> {
-    const user = await this.userService.getUser({ email });
+  /**
+   * Retrieves a user by their email address.
+   * @param email - The user's email address.
+   * @returns The user object.
+   * @throws NotFoundError if the user is not found.
+   */
+  private async findUserByEmail(email: string): Promise<IUser> {
+    const user = await this.userService.findUserByEmail(email);
     if (!user) {
       throw new NotFoundError(ERROR_MESSAGES.USER_NOT_FOUND, { email });
     }
     return user;
   }
 
+  /**
+   * Verifies that the provided password matches the stored password.
+   * @param inputPassword - The password provided by the user.
+   * @param storedPassword - The password stored for the user.
+   * @throws UnauthorizedError if the password is invalid.
+   */
   private async verifyPassword(inputPassword: string, storedPassword: string) {
     const isPasswordValid = await Bun.password.verify(inputPassword, storedPassword);
     if (!isPasswordValid) {
@@ -77,12 +104,24 @@ export class AuthService implements IAuthService {
     }
   }
 
+  /**
+   * Verifies that the user's email address has been verified.
+   * @param emailVerified - Whether the user's email address has been verified.
+   * @param email - The user's email address (for logging).
+   * @throws UnauthorizedError if the email is not verified.
+   */
   private verifyEmailVerification(emailVerified: boolean, email: string) {
     if (!emailVerified) {
       throw new UnauthorizedError(ERROR_MESSAGES.EMAIL_NOT_VERIFIED, { email });
     }
   }
 
+  /**
+   * Starts a new session for the user with the given ID.
+   * @param userId - The ID of the user.
+   * @returns The session ID.
+   * @throws InternalServerError if session creation fails.
+   */
   private async startSession(userId: IUser['id']): Promise<ISession['sessionId']> {
     const session = await this.sessionService.createSession(userId);
     if (!session) {
@@ -91,6 +130,12 @@ export class AuthService implements IAuthService {
     return session.sessionId;
   }
 
+  /**
+   * Constructs a user response object containing the user's information and session ID.
+   * @param user - The user object.
+   * @param sessionId - The session ID.
+   * @returns The user response object.
+   */
   private getUserResponse(user: IUser, sessionId: ISession['sessionId']): IUserResponse {
     return {
       user: {
