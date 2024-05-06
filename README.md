@@ -43,7 +43,8 @@ And the database is abstracted so that it can be easily changed.
 }
 ```
 
-2. Verify the user by sending a GET request to `api/user/verify-email` with the token received in the response from the register endpoint as params: `?token=TOKEN`
+2. Verify the user by sending a GET request to `api/user/verify-email` with the link received in the mock email
+   that is printed in the apps terminal in Docker.
 
 3. Login by sending a POST request to `api/auth/login` with the following payload:
 
@@ -64,8 +65,9 @@ And the database is abstracted so that it can be easily changed.
 }
 ```
 
-6. Reset password by sending a GET request to `api/user/reset-password` with the token received in the response from the forgot-password endpoint as params: `?token=TOKEN`
+6. Reset password by sending a POST request to `api/user/reset-password` with the token received in the response from the forgot-password endpoint.
 
+params: `?token=TOKEN`
 body:
 
 ```json
@@ -73,3 +75,5 @@ body:
   "password": "password"
 }
 ```
+
+7. GET endpoint `api/test` is available to fetch the datas from the database.
