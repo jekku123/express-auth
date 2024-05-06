@@ -56,7 +56,7 @@ And the database is abstracted so that it can be easily changed.
 
 4. Logout by sending a POST request to `api/auth/logout`
 
-5. Reset password by sending a POST request to `api/auth/forgot-password` with the following payload:
+5. Get password reset token by sending a POST request to `api/user/forgot-password` with the following payload:
 
 ```json
 {
@@ -64,7 +64,7 @@ And the database is abstracted so that it can be easily changed.
 }
 ```
 
-4. Reset password by sending a GET request to `api/user/reset-password` with the token received in the response from the forgot-password endpoint as params: `?token=TOKEN`
+6. Reset password by sending a GET request to `api/user/reset-password` with the token received in the response from the forgot-password endpoint as params: `?token=TOKEN`
 
 body:
 
