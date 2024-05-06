@@ -15,14 +15,12 @@ import { ISessionService } from '../types/ISessionService';
  * SessionService
  * This service handles the creation, retrieval, deletion, and management of user sessions.
  * It interacts with the session repository to perform CRUD operations on session data.
- *
- * Responsibilities:
- * - Creating sessions for users and generating session tokens.
- * - Retrieving sessions by session ID.
- * - Deleting sessions by session ID.
- * - Finding expired sessions and returning a list of them.
  */
 export class SessionService implements ISessionService {
+  /**
+   * Constructs a new SessionService.
+   * @param sessionRepository - The repository to interact with session data.
+   */
   constructor(
     @inject(INTERFACE_TYPE.SessionRepository) private sessionRepository: ISessionRepository
   ) {}
@@ -48,6 +46,7 @@ export class SessionService implements ISessionService {
 
     return session;
   }
+
   /**
    * Retrieves a session by its ID.
    * @param sessionId - The ID of the session.

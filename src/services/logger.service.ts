@@ -2,9 +2,24 @@ import { injectable } from 'inversify';
 import winston, { createLogger, format, transports } from 'winston';
 
 @injectable()
+/**
+ * LoggerService
+ * Service for logging messages to the console and to log files.
+ * Uses Winston for logging.
+ * Logs messages at different levels, such as info and error.
+ * Logs messages to different files based on the log level.
+ * Logs messages to the console in development mode.
+ */
 export default class LoggerService {
+  /**
+   * The Winston logger instance used for logging messages.
+   */
   private logger: winston.Logger;
 
+  /**
+   * Creates a new instance of the LoggerService class.
+   * Configures the Winston logger with different transports for logging to files and the console.
+   */
   constructor() {
     this.logger = createLogger({
       level: 'info',
@@ -35,10 +50,19 @@ export default class LoggerService {
     }
   }
 
+  /**
+   * Logs an info message to the console and to the info log file.
+   * @param message
+   * @param meta
+   */
   info(message: string, ...meta: any[]) {
     this.logger.info(message, meta);
   }
 
+  /**
+   * Logs an error message to the console and to the error log file.
+   * @param error
+   */
   error(error: any) {
     this.logger.error(error);
   }

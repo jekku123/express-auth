@@ -3,8 +3,18 @@ import { IMailerService } from '../types/IMailerService';
 
 const BASE_URL = Bun.env.BASE_URL;
 
+/**
+ * Mailer service
+ * Service for sending emails to users.
+ * Provides methods for sending verification and password reset emails.
+ */
 @injectable()
 export default class MailerService implements IMailerService {
+  /**
+   * Sends a verification email to the provided email address.
+   * @param to - The email address to which the verification email should be sent.
+   * @param token - The verification token to include in the email.
+   */
   async sendVerificationEmail(to: string, token: string): Promise<void> {
     const confirmLink = `${BASE_URL}/api/user/verify-email?token=${token}`;
     console.log(
@@ -22,6 +32,11 @@ export default class MailerService implements IMailerService {
     );
   }
 
+  /**
+   * Sends a password reset email to the provided email address.
+   * @param to - The email address to which the password reset email should be sent.
+   * @param token - The password reset token to include in the email.
+   */
   async sendPasswordResetEmail(to: string, token: string): Promise<void> {
     const resetLink = `${BASE_URL}/api/user/reset-password?token=${token}`;
     console.log(

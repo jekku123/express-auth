@@ -7,20 +7,23 @@ import { STATUS_CODES } from '../errors/statusCodes';
 import { IUserController } from '../types/IUserController';
 import { IUserService } from '../types/IUserService';
 
-/**
- * @route /api/user
- * @desc Controller for user routes
- * @access Public
- * @param {IUserService} userService - Service for user operations
- */
 @injectable()
+/**
+ * UserController
+ * Controller for user routes
+ * @route /api/user
+ */
 export class UserController implements IUserController {
+  /**
+   * Constructs a new UserController
+   * @param userService - Service for user operations
+   */
   constructor(@inject(INTERFACE_TYPE.UserService) private userService: IUserService) {}
 
   /**
-   * @route POST /api/user/register
-   * @desc Register
+   * Handles user registration
    * @access Public
+   * @POST /api/user/register
    */
   async onRegister(req: Request, res: Response, next: NextFunction) {
     const { email, password } = req.body;
@@ -34,9 +37,9 @@ export class UserController implements IUserController {
   }
 
   /**
-   * @route POST /api/user/verify-email
-   * @desc Verify email
+   * Handles email verification
    * @access Public
+   * @POST /api/user/verify-email
    */
   async onVerifyEmail(req: Request, res: Response, next: NextFunction) {
     const query = req.query;
@@ -54,7 +57,9 @@ export class UserController implements IUserController {
   }
 
   /**
-   * @desc For testing purposes
+   * Handles getting user profile
+   * @access Private
+   * @GET /api/user
    */
   async onGetUser(req: Request, res: Response, next: NextFunction) {
     const id = req.user.id;
@@ -70,9 +75,9 @@ export class UserController implements IUserController {
   }
 
   /**
-   * @route PUT /api/user/update-password
-   * @desc Update password
+   * Handles updating user password
    * @access Private
+   * @PUT /api/user/update-password
    */
   async onUpdatePassword(req: Request, res: Response, next: NextFunction) {
     const userId = req.user.id;
@@ -87,7 +92,9 @@ export class UserController implements IUserController {
   }
 
   /**
-   * @route POST /api/user/forgot-password
+   * Handles sending password reset link to email
+   * @access Public
+   * @POST /api/user/forgot-password
    */
 
   async onForgotPassword(req: Request, res: Response, next: NextFunction) {
@@ -102,7 +109,9 @@ export class UserController implements IUserController {
   }
 
   /**
-   * @route POST /api/user/reset-password
+   * Handles resetting user password
+   * @access Public
+   * @POST /api/user/reset-password
    */
   async onResetPassword(req: Request, res: Response, next: NextFunction) {
     const query = req.query;

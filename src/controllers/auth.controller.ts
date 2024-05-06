@@ -10,22 +10,23 @@ import User from '../models/user';
 import { IAuthController } from '../types/IAuthController';
 import { IAuthService } from '../types/IAuthService';
 
-/**
- * @route /api/auth
- * @desc Controller for authentication routes
- * @access Public
- * @param {IAuthService} authService - Service for authentication operations
- * @POST /api/auth/login
- * @POST /api/auth/logout
- */
 @injectable()
+/**
+ * AuthController
+ * Controller for authentication routes
+ * @route /api/auth
+ */
 export class AuthController implements IAuthController {
+  /**
+   * Constructs a new AuthController
+   * @param authService - Service for authentication operations
+   */
   constructor(@inject(INTERFACE_TYPE.AuthService) private authService: IAuthService) {}
 
   /**
-   * @route POST /api/auth/login
-   * @desc Login
+   * Handles user authentication of user login
    * @access Public
+   * @POST /api/auth/login
    */
   async onLogin(req: Request, res: Response, next: NextFunction) {
     const { email, password } = req.body;
@@ -40,9 +41,9 @@ export class AuthController implements IAuthController {
   }
 
   /**
-   * @route POST /api/auth/logout
-   * @desc Logout
+   * Handles user logout
    * @access Public
+   * @POST /api/auth/logout
    */
   async onLogout(req: Request, res: Response, next: NextFunction) {
     const cookies = req.cookies;
@@ -61,7 +62,9 @@ export class AuthController implements IAuthController {
   }
 
   /**
-   * @route GET /api/auth/test
+   * For testing purposes
+   * @access Public
+   * @GET /api/auth/test
    */
   async onTest(_req: Request, res: Response, next: NextFunction) {
     try {
