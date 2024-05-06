@@ -16,15 +16,13 @@ export default class SessionCleanupJob implements ISessionCleanupJob {
     // Runs every minute
     cron.schedule('* * * * *', async (keke) => {
       try {
-        console.log('Cleaning up expired sessions...');
         const now = new Date();
         const expiredSessions = await this.sessionService.findExpiredSessions(now);
-        console.log('Expired sessions:', expiredSessions.length);
-        console.log('Expired sessions:', expiredSessions);
+
         for (const session of expiredSessions) {
           await this.sessionService.deleteSession(session.sessionId);
+          console.log(`Session ${session.sessionId} deleted by cleanup job`);
         }
-        console.log('Expired sessions cleaned up.');
       } catch (error) {
         console.error('Error during session cleanup:', error);
       }

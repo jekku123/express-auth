@@ -1,7 +1,6 @@
 import { injectable } from 'inversify';
 import { FilterQuery } from 'mongoose';
-import AppError from '../errors/AppError';
-import { STATUS_CODES } from '../errors/statusCodes';
+import { InternalServerError } from '../errors/server-error';
 import User, { IUser } from '../models/user';
 import { IUserRepository } from '../types/IUserRepository';
 
@@ -20,7 +19,7 @@ export default class UserRepository implements IUserRepository {
   async update(id: string, data: Partial<IUser>): Promise<IUser> {
     const updatedUser = await User.findOneAndUpdate({ _id: id }, data);
     if (!updatedUser) {
-      throw new AppError('User not updated', STATUS_CODES.INTERNAL_SERVER_ERROR);
+      throw new InternalServerError('User not updated');
     }
     return updatedUser;
   }
@@ -28,9 +27,14 @@ export default class UserRepository implements IUserRepository {
   async delete(id: string): Promise<IUser> {
     const deletedUser = await User.findOneAndDelete({ _id: id });
     if (!deletedUser) {
-      throw new AppError('User not deleted', STATUS_CODES.INTERNAL_SERVER_ERROR);
+      throw new InternalServerError('User not deleted');
     }
     return deletedUser;
+  }
+
+  async findById(id: string): Promise<IUser | null> {
+    const user = await User.findById(id);
+    return user;
   }
 
   async save(user: IUser): Promise<IUser> {

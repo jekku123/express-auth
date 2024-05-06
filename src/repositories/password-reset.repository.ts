@@ -1,7 +1,6 @@
 import { injectable } from 'inversify';
 import { FilterQuery } from 'mongoose';
-import AppError from '../errors/AppError';
-import { STATUS_CODES } from '../errors/statusCodes';
+import { InternalServerError } from '../errors/server-error';
 import PasswordReset, { IPasswordReset } from '../models/password-reset';
 import { IPasswordResetRepository } from '../types/IPasswordResetRepository';
 
@@ -20,7 +19,7 @@ export default class PasswordResetRepository implements IPasswordResetRepository
   async delete(token: string): Promise<IPasswordReset | null> {
     const deletedToken = await PasswordReset.findOneAndDelete({ token });
     if (!deletedToken) {
-      throw new AppError('Token not deleted', STATUS_CODES.INTERNAL_SERVER_ERROR);
+      throw new InternalServerError('Password reset token not deleted');
     }
     return deletedToken;
   }

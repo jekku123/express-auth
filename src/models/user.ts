@@ -1,4 +1,4 @@
-import mongoose, { Document, HydratedDocument, Model, Schema } from 'mongoose';
+import mongoose, { Document, Model, Schema } from 'mongoose';
 
 export interface IUser extends Document {
   name?: string;
@@ -8,14 +8,9 @@ export interface IUser extends Document {
   password: string;
 }
 
-interface IUserMethods {
-  verifyPassword: (password: string) => Promise<boolean>;
-  updatePassword: (password: string) => Promise<IUser>;
-}
+interface IUserMethods {}
 
-interface IUserStatics {
-  findByEmail: (email: string) => Promise<HydratedDocument<IUser, IUserMethods> | null>;
-}
+interface IUserStatics {}
 
 type UserModel = Model<IUser, {}, IUserMethods> & IUserStatics;
 
@@ -39,19 +34,6 @@ const userSchema = new Schema<IUser, UserModel, IUserMethods>({
     type: String,
     required: [true, 'Password is required'],
   },
-});
-
-userSchema.method('updatePassword', async function (password: string) {
-  this.password = password;
-  return this.save();
-});
-
-userSchema.method('verifyPassword', async function (password: string) {
-  return await Bun.password.verify(password, this.password);
-});
-
-userSchema.static('findByEmail', function (email: string) {
-  return this.findOne({ email });
 });
 
 const User = mongoose.model<IUser, UserModel>('User', userSchema);

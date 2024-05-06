@@ -1,35 +1,23 @@
 import crypto from 'crypto';
-import mongoose, { Document, HydratedDocument, Model, Schema } from 'mongoose';
+import mongoose, { Document, Model, Schema } from 'mongoose';
 
-export interface IVerificationToken extends Document {
+export interface IEmailVerification extends Document {
   token: string;
   identifier: string;
   expiresAt: Date;
 }
 
-interface IVerificationTokenMethods {
-  verifyToken: (token: string) => {
-    success: boolean;
-    message: string;
-  };
-}
+interface IEmailVerificationMethods {}
 
-interface IVerificationTokenStatics {
-  findByEmail: (
-    email: string
-  ) => Promise<HydratedDocument<IVerificationToken, IVerificationTokenMethods>> | null;
-  findByToken: (
-    token: string
-  ) => Promise<HydratedDocument<IVerificationToken, IVerificationTokenMethods>> | null;
-}
+interface IEmailVerificationStatics {}
 
-type VerificationTokenModel = Model<IVerificationToken, {}, IVerificationTokenMethods> &
-  IVerificationTokenStatics;
+type EmailVerificationModel = Model<IEmailVerification, {}, IEmailVerificationMethods> &
+  IEmailVerificationStatics;
 
-const verificationTokenSchema = new Schema<
-  IVerificationToken,
-  VerificationTokenModel,
-  IVerificationTokenMethods
+const emailVerificationSchema = new Schema<
+  IEmailVerification,
+  EmailVerificationModel,
+  IEmailVerificationMethods
 >({
   token: {
     type: String,
@@ -45,30 +33,9 @@ const verificationTokenSchema = new Schema<
   },
 });
 
-verificationTokenSchema.method('verifyToken', function (token: string) {
-  if (this.expiresAt < new Date(Date.now())) {
-    return {
-      success: false,
-      message: 'Verification token expired',
-    };
-  }
-  return {
-    success: true,
-    message: 'Verification token verified',
-  };
-});
-
-verificationTokenSchema.static('findByEmail', function (email: string) {
-  return this.findOne({ email });
-});
-
-verificationTokenSchema.static('findByToken', function (token: string) {
-  return this.findOne({ token });
-});
-
-const VerificationToken = mongoose.model<IVerificationToken, VerificationTokenModel>(
-  'VerificationToken',
-  verificationTokenSchema
+const EmailVerification = mongoose.model<IEmailVerification, EmailVerificationModel>(
+  'EmailVerification',
+  emailVerificationSchema
 );
 
-export default VerificationToken;
+export default EmailVerification;

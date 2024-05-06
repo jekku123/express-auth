@@ -1,9 +1,9 @@
 import { inject, injectable } from 'inversify';
 
 import { INTERFACE_TYPE } from '../container/dependencies';
-import AppError from '../errors/AppError';
-import { ERROR_MESSAGES } from '../errors/errorMessages';
-import { STATUS_CODES } from '../errors/statusCodes';
+import { UnauthorizedError } from '../errors/auth-error';
+import { BadRequestError, NotFoundError } from '../errors/client-error';
+import { ERROR_MESSAGES } from '../errors/error-messages';
 import { IPasswordReset } from '../models/password-reset';
 import { IUser } from '../models/user';
 import { IMailerService } from '../types/IMailerService';
@@ -41,7 +41,7 @@ export default class PasswordResetService implements IPasswordResetService {
 
   private validateEmail(email: string) {
     if (!email) {
-      throw new AppError(ERROR_MESSAGES.BAD_REQUEST, STATUS_CODES.BAD_REQUEST);
+      throw new BadRequestError(ERROR_MESSAGES.MISSING_EMAIL);
     }
   }
 
@@ -55,14 +55,14 @@ export default class PasswordResetService implements IPasswordResetService {
 
   private validateTokenAndPassword(token: string, password: string) {
     if (!token || !password) {
-      throw new AppError(ERROR_MESSAGES.BAD_REQUEST, STATUS_CODES.BAD_REQUEST);
+      throw new BadRequestError(ERROR_MESSAGES.BAD_REQUEST);
     }
   }
 
   private async getPasswordReset(token: string): Promise<IPasswordReset> {
     const passwordReset = await this.passwordResetRepository.find({ token });
     if (!passwordReset) {
-      throw new AppError(ERROR_MESSAGES.INVALID_TOKEN, STATUS_CODES.UNAUTHORIZED);
+      throw new NotFoundError(ERROR_MESSAGES.TOKEN_NOT_FOUND);
     }
     return passwordReset;
   }
@@ -70,7 +70,7 @@ export default class PasswordResetService implements IPasswordResetService {
   private verifyTokenExpiry(passwordReset: IPasswordReset) {
     const hasExpired = new Date(passwordReset.expiresAt) < new Date();
     if (hasExpired) {
-      throw new AppError(ERROR_MESSAGES.TOKEN_EXPIRED, STATUS_CODES.UNAUTHORIZED);
+      throw new UnauthorizedError(ERROR_MESSAGES.TOKEN_EXPIRED);
     }
   }
 

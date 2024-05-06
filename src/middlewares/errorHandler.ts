@@ -1,19 +1,17 @@
 import { NextFunction, Request, Response } from 'express';
-import AppError from '../errors/AppError';
-import { ERROR_MESSAGES } from '../errors/errorMessages';
+import { ERROR_MESSAGES } from '../errors/error-messages';
 import { STATUS_CODES } from '../errors/statusCodes';
 import { ILoggerService } from '../types/ILoggerService';
 
 import container from '../container';
 import { INTERFACE_TYPE } from '../container/dependencies';
+import { CustomError } from '../errors/custom-error';
 
 const createErrorHandler = (logger: ILoggerService) => {
   return (err: Error, _req: Request, res: Response, next: NextFunction) => {
-    // Log the error
     logger.error(err);
 
-    // Handle the error based on its type
-    if (err instanceof AppError) {
+    if (err instanceof CustomError) {
       const { statusCode, message, context, stack } = err;
 
       return res.status(statusCode).send({

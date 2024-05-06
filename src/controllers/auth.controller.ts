@@ -4,7 +4,7 @@ import { INTERFACE_TYPE } from '../container/dependencies';
 
 import { cookieSettings } from '../config/cookieSettings';
 import { STATUS_CODES } from '../errors/statusCodes';
-import VerificationToken from '../models/email-verification';
+import EmailVerification from '../models/email-verification';
 import Session from '../models/session';
 import User from '../models/user';
 import { IAuthController } from '../types/IAuthController';
@@ -20,11 +20,7 @@ import { IAuthService } from '../types/IAuthService';
  */
 @injectable()
 export class AuthController implements IAuthController {
-  private authService: IAuthService;
-
-  constructor(@inject(INTERFACE_TYPE.AuthService) authService: IAuthService) {
-    this.authService = authService;
-  }
+  constructor(@inject(INTERFACE_TYPE.AuthService) private authService: IAuthService) {}
 
   /**
    * @route POST /api/auth/login
@@ -70,10 +66,10 @@ export class AuthController implements IAuthController {
   async onTest(_req: Request, res: Response, next: NextFunction) {
     try {
       const users = await User.find({});
-      const verificationTokens = await VerificationToken.find({});
+      const emailVerifications = await EmailVerification.find({});
       const sessions = await Session.find({});
 
-      res.status(STATUS_CODES.OK).send({ users, verificationTokens, sessions });
+      res.status(STATUS_CODES.OK).send({ users, emailVerifications, sessions });
     } catch (error) {
       next(error);
     }

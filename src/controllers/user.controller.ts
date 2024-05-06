@@ -1,8 +1,8 @@
 import { NextFunction, Request, Response } from 'express';
 import { inject, injectable } from 'inversify';
 import { INTERFACE_TYPE } from '../container/dependencies';
-import AppError from '../errors/AppError';
-import { ERROR_MESSAGES } from '../errors/errorMessages';
+import { BadRequestError } from '../errors/client-error';
+import { ERROR_MESSAGES } from '../errors/error-messages';
 import { STATUS_CODES } from '../errors/statusCodes';
 import { IUserController } from '../types/IUserController';
 import { IUserService } from '../types/IUserService';
@@ -15,11 +15,7 @@ import { IUserService } from '../types/IUserService';
  */
 @injectable()
 export class UserController implements IUserController {
-  private userService: IUserService;
-
-  constructor(@inject(INTERFACE_TYPE.UserService) userService: IUserService) {
-    this.userService = userService;
-  }
+  constructor(@inject(INTERFACE_TYPE.UserService) private userService: IUserService) {}
 
   /**
    * @route POST /api/user/register
@@ -113,7 +109,7 @@ export class UserController implements IUserController {
     const { password } = req.body;
 
     if (!query?.token) {
-      throw new AppError(ERROR_MESSAGES.MISSING_TOKEN, STATUS_CODES.BAD_REQUEST);
+      throw new BadRequestError(ERROR_MESSAGES.INVALID_TOKEN);
     }
 
     try {

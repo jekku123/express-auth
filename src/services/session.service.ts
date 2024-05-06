@@ -1,8 +1,12 @@
 import crypto from 'crypto';
 import { inject, injectable } from 'inversify';
-import { SESSION_ID_EXPIRES } from '../config/cookieSettings';
+
+import { SESSION_ID_EXPIRES } from '../config/constants';
 import { INTERFACE_TYPE } from '../container/dependencies';
+import { ERROR_MESSAGES } from '../errors/error-messages';
+import { InternalServerError } from '../errors/server-error';
 import { ISession } from '../models/session';
+import { IUser } from '../models/user';
 import { ISessionRepository } from '../types/ISessionRepository';
 import { ISessionService } from '../types/ISessionService';
 
@@ -12,7 +16,7 @@ export class SessionService implements ISessionService {
     @inject(INTERFACE_TYPE.SessionRepository) private sessionRepository: ISessionRepository
   ) {}
 
-  async createSession(userId: ISession['userId']): Promise<ISession> {
+  async createSession(userId: IUser['id']): Promise<ISession> {
     const { token, expiresAt } = this.generateSessionId();
 
     const session = await this.sessionRepository.create({
@@ -22,7 +26,7 @@ export class SessionService implements ISessionService {
     });
 
     if (!session) {
-      throw new Error('Session not created');
+      throw new InternalServerError(ERROR_MESSAGES.SESSION_NOT_CREATED);
     }
 
     return session;
@@ -37,14 +41,14 @@ export class SessionService implements ISessionService {
     const session = await this.sessionRepository.delete(sessionId);
 
     if (!session) {
-      throw new Error('Session not deleted');
+      throw new InternalServerError(ERROR_MESSAGES.INTERNAL_SERVER_ERROR);
     }
 
     return session;
   }
 
   async findExpiredSessions(now: Date): Promise<ISession[]> {
-    const expiredSessions = await this.sessionRepository.findMany({});
+    const expiredSessions = await this.sessionRepository.findMany({ expiresAt: { $lt: now } });
     return expiredSessions;
   }
 

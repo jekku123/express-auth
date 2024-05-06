@@ -1,6 +1,6 @@
-import { IVerificationToken } from '../models/email-verification';
+import { IEmailVerification } from '../models/email-verification';
 
 export interface IEmailVerificationService {
-  createVerificationToken(email: string): Promise<IVerificationToken>;
-  useVerificationToken(token: string): Promise<IVerificationToken>;
+  createEmailVerification(email: string): Promise<IEmailVerification>;
+  useEmailVerification(token: string): Promise<IEmailVerification>;
 }

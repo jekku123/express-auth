@@ -1,9 +1,9 @@
 import { inject, injectable } from 'inversify';
 
-import { ERROR_MESSAGES } from '../errors/errorMessages';
+import { ERROR_MESSAGES } from '../errors/error-messages';
 import { STATUS_CODES } from '../errors/statusCodes';
 
-import AppError from '../errors/AppError';
+import AppError from '../errors/app-error';
 import { IUser } from '../models/user';
 
 import { INTERFACE_TYPE } from '../container/dependencies';
@@ -78,7 +78,7 @@ export class UserService implements IUserService {
   async verifyEmail(token: string): Promise<IUser> {
     this.validateToken(token);
 
-    const verification = await this.emailVerificationService.useVerificationToken(token);
+    const verification = await this.emailVerificationService.useEmailVerification(token);
     const existingUser = await this.getUser({ email: verification.identifier });
 
     if (!existingUser) {
@@ -87,7 +87,7 @@ export class UserService implements IUserService {
       });
     }
 
-    await this.setEmailVerified(existingUser._id);
+    await this.setEmailVerified(existingUser.id);
 
     return existingUser;
   }
@@ -137,7 +137,7 @@ export class UserService implements IUserService {
   }
 
   private async sendVerificationEmail(email: string) {
-    const { identifier, token } = await this.emailVerificationService.createVerificationToken(
+    const { identifier, token } = await this.emailVerificationService.createEmailVerification(
       email
     );
     await this.mailerService.sendVerificationEmail(identifier, token);
@@ -150,7 +150,7 @@ export class UserService implements IUserService {
   }
 
   private async getUserById(userId: string): Promise<IUser> {
-    const user = await this.userRepository.find({ _id: userId });
+    const user = await this.userRepository.findById(userId);
     if (!user) {
       throw new AppError(ERROR_MESSAGES.USER_NOT_FOUND, STATUS_CODES.NOT_FOUND);
     }
