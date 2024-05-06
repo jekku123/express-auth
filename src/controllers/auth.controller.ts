@@ -4,10 +4,6 @@ import { INTERFACE_TYPE } from '../container/dependencies';
 
 import { cookieSettings } from '../config/cookieSettings';
 import { STATUS_CODES } from '../errors/statusCodes';
-import EmailVerification from '../models/email-verification';
-import PasswordReset from '../models/password-reset';
-import Session from '../models/session';
-import User from '../models/user';
 import { IAuthController } from '../types/IAuthController';
 import { IAuthService } from '../types/IAuthService';
 
@@ -57,26 +53,6 @@ export class AuthController implements IAuthController {
       this.authService.logout(cookies.sessionId);
       res.clearCookie('sessionId', cookieSettings.httpOnly);
       res.status(STATUS_CODES.OK).send({ message: 'Logged out' });
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  /**
-   * For testing purposes
-   * @access Public
-   * @GET /api/auth/test
-   */
-  async onTest(_req: Request, res: Response, next: NextFunction) {
-    try {
-      const users = await User.find({});
-      const emailVerifications = await EmailVerification.find({});
-      const sessions = await Session.find({});
-      const passwordResetTokens = await PasswordReset.find({});
-
-      res
-        .status(STATUS_CODES.OK)
-        .send({ users, emailVerifications, sessions, passwordResetTokens });
     } catch (error) {
       next(error);
     }

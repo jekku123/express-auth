@@ -25,6 +25,7 @@ import EmailVerificationRepository from '../repositories/email-verification.repo
 import PasswordResetRepository from '../repositories/password-reset.repository';
 import PasswordResetService from '../services/password-reset.service';
 
+import { ITestController, TestController } from '../controllers/test.controller';
 import { IEmailVerificationRepository } from '../types/IEmailVerificationRepository';
 import { IEmailVerificationService } from '../types/IEmailVerificationService';
 import { IPasswordResetRepository } from '../types/IPasswordResetRepository';
@@ -43,6 +44,7 @@ const container = new Container();
 // Controllers
 container.bind<IAuthController>(INTERFACE_TYPE.AuthController).to(AuthController);
 container.bind<IUserController>(INTERFACE_TYPE.UserController).to(UserController);
+container.bind<ITestController>(INTERFACE_TYPE.TestController).to(TestController);
 
 // Services
 container.bind<IAuthService>(INTERFACE_TYPE.AuthService).to(AuthService);

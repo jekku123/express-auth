@@ -12,6 +12,7 @@ import { IEmailVerificationService } from '../types/IEmailVerificationService';
 import { ILoggerService } from '../types/ILoggerService';
 import { IMailerService } from '../types/IMailerService';
 import { IPasswordResetService } from '../types/IPasswordResetService';
+import { IRegisterResponse } from '../types/IRegisterResponse';
 import { IUserRepository } from '../types/IUserRepository';
 import { IUserService } from '../types/IUserService';
 
@@ -27,7 +28,7 @@ export class UserService implements IUserService {
     private passwordResetService: IPasswordResetService
   ) {}
 
-  async register(email: string, password: string): Promise<IUser> {
+  async register(email: string, password: string): Promise<IRegisterResponse> {
     this.validateRegistrationData(email, password);
     await this.checkIfUserExists(email);
 
@@ -37,7 +38,8 @@ export class UserService implements IUserService {
     await this.sendVerificationEmail(email);
 
     this.loggerService.info(`User with email ${email} registered`, UserService.name);
-    return user;
+
+    return this.registerResponse(user);
   }
 
   async findUser(data: Partial<IUser>): Promise<IUser> {
@@ -179,5 +181,12 @@ export class UserService implements IUserService {
     if (!token) {
       throw new BadRequestError(ERROR_MESSAGES.INVALID_TOKEN);
     }
+  }
+
+  private registerResponse(user: IUser): IRegisterResponse {
+    return {
+      id: user.id,
+      email: user.email,
+    };
   }
 }

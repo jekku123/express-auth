@@ -13,7 +13,15 @@ export default class UserRepository implements IUserRepository {
 
   async find(data: FilterQuery<IUser>): Promise<IUser | null> {
     const user = await User.findOne(data);
-    return user;
+    if (!user) {
+      return null;
+    }
+    return this.userMapper(user);
+  }
+
+  async findMany(data: FilterQuery<IUser>): Promise<IUser[]> {
+    const users = await User.find(data);
+    return users.map(this.userMapper);
   }
 
   async update(id: string, data: Partial<IUser>): Promise<IUser> {
@@ -34,11 +42,18 @@ export default class UserRepository implements IUserRepository {
 
   async findById(id: string): Promise<IUser | null> {
     const user = await User.findById(id);
-    return user;
+    if (!user) {
+      return null;
+    }
+    return this.userMapper(user);
   }
 
-  // async save(user: IUser): Promise<IUser> {
-  //   const savedUser = await user.save();
-  //   return savedUser;
-  // }
+  private userMapper(user: any): IUser {
+    return {
+      id: user.id,
+      email: user.email,
+      password: user.password,
+      emailVerified: user.emailVerified,
+    };
+  }
 }

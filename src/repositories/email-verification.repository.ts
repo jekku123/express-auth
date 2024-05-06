@@ -13,7 +13,15 @@ export default class EmailVerificationRepository implements IEmailVerificationRe
 
   async find(data: FilterQuery<IEmailVerification>): Promise<IEmailVerification | null> {
     const token = await EmailVerification.findOne(data);
-    return token;
+    if (!token) {
+      return null;
+    }
+    return this.emailVerificationMapper(token);
+  }
+
+  async findMany(data: FilterQuery<IEmailVerification>): Promise<IEmailVerification[]> {
+    const tokens = await EmailVerification.find(data);
+    return tokens.map(this.emailVerificationMapper);
   }
 
   async delete(token: string): Promise<IEmailVerification> {
@@ -22,5 +30,14 @@ export default class EmailVerificationRepository implements IEmailVerificationRe
       throw new InternalServerError('Email verification token not deleted');
     }
     return deletedToken;
+  }
+
+  private emailVerificationMapper(emailVerification: any): IEmailVerification {
+    return {
+      id: emailVerification.id,
+      token: emailVerification.token,
+      identifier: emailVerification.identifier,
+      expiresAt: emailVerification.expiresAt,
+    };
   }
 }

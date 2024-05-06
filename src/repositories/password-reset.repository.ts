@@ -13,7 +13,15 @@ export default class PasswordResetRepository implements IPasswordResetRepository
 
   async find(data: FilterQuery<IPasswordReset>): Promise<IPasswordReset | null> {
     const token = await PasswordReset.findOne(data);
-    return token;
+    if (!token) {
+      return null;
+    }
+    return this.passwordResetMapper(token);
+  }
+
+  async findMany(data: FilterQuery<IPasswordReset>): Promise<IPasswordReset[]> {
+    const tokens = await PasswordReset.find(data);
+    return tokens.map(this.passwordResetMapper);
   }
 
   async delete(token: string): Promise<IPasswordReset | null> {
@@ -22,5 +30,14 @@ export default class PasswordResetRepository implements IPasswordResetRepository
       throw new InternalServerError('Password reset token not deleted');
     }
     return deletedToken;
+  }
+
+  private passwordResetMapper(passwordReset: any): IPasswordReset {
+    return {
+      id: passwordReset.id,
+      token: passwordReset.token,
+      identifier: passwordReset.identifier,
+      expiresAt: passwordReset.expiresAt,
+    };
   }
 }

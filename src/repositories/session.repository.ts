@@ -19,13 +19,33 @@ export default class SessionRepository implements ISessionRepository {
     return session;
   }
 
-  async find(sessionId: string): Promise<ISession | null> {
-    const session = await Session.findOne({ sessionId: sessionId });
-    return session;
+  async find(data: FilterQuery<ISession>): Promise<ISession | null> {
+    const session = await Session.findOne(data);
+    if (!session) {
+      return null;
+    }
+    return this.sessionMapper(session);
   }
 
   async findMany(data: FilterQuery<ISession>): Promise<ISession[]> {
     const sessions = await Session.find(data);
-    return sessions;
+    return sessions.map(this.sessionMapper);
+  }
+
+  async findById(id: string): Promise<ISession | null> {
+    const session = await Session.findById(id);
+    if (!session) {
+      return null;
+    }
+    return this.sessionMapper(session);
+  }
+
+  private sessionMapper(session: any): ISession {
+    return {
+      id: session.id,
+      sessionId: session.sessionId,
+      userId: session.userId,
+      expiresAt: session.expiresAt,
+    };
   }
 }

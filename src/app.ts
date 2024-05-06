@@ -7,6 +7,7 @@ import 'reflect-metadata';
 import { corsOptions } from './config/corsOptions';
 import { errorHandler } from './middlewares/errorHandler';
 import authRoutes from './routes/auth';
+import testRoutes from './routes/test';
 import userRoutes from './routes/user';
 
 const app = express();
@@ -19,6 +20,7 @@ app.use(morgan('dev'));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
+app.use('/api/test', testRoutes);
 
 app.use(errorHandler);
 

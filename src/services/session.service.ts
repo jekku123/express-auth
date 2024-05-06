@@ -53,7 +53,7 @@ export class SessionService implements ISessionService {
    * @returns The session, or null if not found.
    */
   async getSessionById(sessionId: string): Promise<ISession | null> {
-    const session = await this.sessionRepository.find(sessionId);
+    const session = await this.sessionRepository.findById(sessionId);
     return session;
   }
 

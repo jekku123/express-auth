@@ -30,7 +30,7 @@ export class UserController implements IUserController {
 
     try {
       const user = await this.userService.register(email, password);
-      res.status(201).send(user);
+      res.status(201).send({ message: 'User registered', user });
     } catch (error) {
       next(error);
     }
@@ -85,7 +85,10 @@ export class UserController implements IUserController {
     const { oldPassword, newPassword } = req.body;
     try {
       const user = await this.userService.updatePassword(userId, oldPassword, newPassword);
-      res.status(200).send(user);
+      res.status(200).send({
+        message: 'Password updated',
+        user,
+      });
     } catch (error) {
       next(error);
     }

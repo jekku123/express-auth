@@ -1,6 +1,7 @@
 const controllers = {
   AuthController: Symbol.for('AuthController'),
   UserController: Symbol.for('UserController'),
+  TestController: Symbol.for('TestController'),
 };
 
 const services = {

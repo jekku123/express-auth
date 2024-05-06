@@ -12,8 +12,8 @@ import { BadRequestError, NotFoundError } from '../errors/client-error';
 import { InternalServerError } from '../errors/server-error';
 import { ISession } from '../models/session';
 import { IUser } from '../models/user';
+import { ILoginResponse } from '../types/ILoginResponse';
 import { ISessionService } from '../types/ISessionService';
-import { IUserResponse } from '../types/IUserResponse';
 
 @injectable()
 /**
@@ -56,7 +56,7 @@ export class AuthService implements IAuthService {
 
     this.loggerService.info(`User with email ${email} logged in`, { service: AuthService.name });
 
-    return this.getUserResponse(user, sessionId);
+    return this.getLoginResponse(user, sessionId);
   }
 
   /**
@@ -149,7 +149,7 @@ export class AuthService implements IAuthService {
    * @returns An object containing the user's information and session ID.
    * @private
    */
-  private getUserResponse(user: IUser, sessionId: ISession['sessionId']): IUserResponse {
+  private getLoginResponse(user: IUser, sessionId: ISession['sessionId']): ILoginResponse {
     return {
       user: {
         id: user.id,
