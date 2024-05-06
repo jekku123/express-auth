@@ -10,7 +10,7 @@ const router = express.Router();
 const controller = container.get<UserController>(INTERFACE_TYPE.UserController);
 
 router.post('/register', controller.onRegister.bind(controller));
-router.post('/verify-email', controller.onVerifyEmail.bind(controller));
+router.get('/verify-email', controller.onVerifyEmail.bind(controller));
 router.put('/update-password', controller.onUpdatePassword.bind(controller));
 router.post('/reset-password', controller.onResetPassword.bind(controller));
 router.post('/forgot-password', controller.onForgotPassword.bind(controller));
